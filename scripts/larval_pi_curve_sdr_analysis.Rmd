@@ -1,3 +1,8 @@
+---
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
 --
 title: "Larval Photosynthesis Rates Extraction with LoLinR - Bermuda 2023 - PI Curves"
 author: "Zoe Dellaert"
@@ -79,7 +84,7 @@ View data. Remove outliers.
 ```{r}
 boxplot(pi_data$P.nmol.org.min~pi_data$PAR)
 
-pi_data <- pi_data%>%filter(P.nmol.org.min<0.06)
+#pi_data <- pi_data%>%filter(P.nmol.org.min<0.06)
 
 boxplot(pi_data$P.nmol.org.min)
 
@@ -87,8 +92,8 @@ boxplot(pi_data$P.nmol.org.min)
 
 Log transform the data.
 ```{r}
-pi_data<-pi_data%>%
-  mutate(P.nmol.org.min=log10(P.nmol.org.min+1))
+#pi_data<-pi_data%>%
+  #mutate(P.nmol.org.min=log10(P.nmol.org.min+1))
 
 boxplot(pi_data$P.nmol.org.min~pi_data$PAR)
 ```
@@ -217,8 +222,7 @@ pi_plot3<-pi_data %>%
       axis.text=element_text(size=12, color="black"), 
       legend.title=element_text(face="bold", size=14), 
       legend.text=element_text(size=12)
-      )
-pi_plot3
+      );pi_plot3
 ```
 
 
