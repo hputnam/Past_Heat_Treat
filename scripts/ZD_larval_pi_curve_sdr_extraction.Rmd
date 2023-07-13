@@ -1,0 +1,196 @@
+--
+title: "Larval Photosynthesis Rates Extraction with LoLinR - Bermuda 2023 - PI Curves"
+author: "Jill Ashey"
+date: "2023-07-13"
+output: html_document
+---
+
+This script is extracting photosynthesis rates under different light levels for P. asteroides larvae in Bermuda. The code is based on A. Huffmyer's PI [script](https://github.com/AHuffmyer/larval_symbiont_TPC/blob/main/scripts/larval_pi_curve_sdr_extraction.Rmd). Important note - this data was collected in 4 mL vials, not the 24-well plates.
+
+## Setup  
+
+Set up workspace, set options, and load required packages.    
+```{r}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+```{r, warning=FALSE, message=FALSE}
+## install packages if you dont already have them in your library
+if ("devtools" %in% rownames(installed.packages()) == 'FALSE') install.packages('devtools') 
+library(devtools)
+if ("segmented" %in% rownames(installed.packages()) == 'FALSE') install.packages('segmented') 
+if ("plotrix" %in% rownames(installed.packages()) == 'FALSE') install.packages('plotrix') 
+if ("gridExtra" %in% rownames(installed.packages()) == 'FALSE') install.packages('gridExtra') 
+if ("LoLinR" %in% rownames(installed.packages()) == 'FALSE') install_github('colin-olito/LoLinR') 
+if ("lubridate" %in% rownames(installed.packages()) == 'FALSE') install.packages('lubridate') 
+if ("chron" %in% rownames(installed.packages()) == 'FALSE') install.packages('chron') 
+if ("plyr" %in% rownames(installed.packages()) == 'FALSE') install.packages('plyr') 
+if ("dplyr" %in% rownames(installed.packages()) == 'FALSE') install.packages('dplyr') 
+if ("stringr" %in% rownames(installed.packages()) == 'FALSE') install.packages('stringr') 
+if ("Rmisc" %in% rownames(installed.packages()) == 'FALSE') install.packages('Rmisc') 
+if ("respR" %in% rownames(installed.packages()) == 'FALSE') install.packages('respR') 
+
+
+#load packages
+library("ggplot2")
+library("segmented")
+library("plotrix")
+library("gridExtra")
+library("LoLinR")
+library("lubridate")
+library("chron")
+library('plyr')
+library('dplyr')
+library('stringr')
+library('Rmisc')
+library('respR')
+library("tidyverse")
+```
+
+## Read in files  
+
+Set the path of all respirometry files within the R project.   
+
+```{r, warning=FALSE, message=FALSE}
+path.p<-"../data/larval_pi_curves/runs" #location of files
+```
+
+Bring in the file names.
+```{r, warning=FALSE, message=FALSE}
+# bring in the respiration file names
+file.names<-basename(list.files(path = path.p, pattern = "csv$", recursive = TRUE)) 
+# remove test file once we have more pi curve data 
+```
+
+Bring in the run metadata. 
+```{r}
+run_metadata<-read.csv("../data/larval_pi_curves/larval_PIcurve_SDR_Run_Info.csv")
+```
+
+## Extract photosynthesis rates  
+
+Generate photosynthesis data frames.
+
+```{r, warning=FALSE, message=FALSE}
+#generate a 7 column dataframe with specific column names
+#photosynthesis
+Photo.R <- data.frame(matrix(NA, ncol=7))
+colnames(Photo.R) <- c("Date", "Plate","Sample.ID","Chamber.ID","Light", "Intercept", "umol.L.min")
+
+Photo.Rb <- data.frame(matrix(NA, ncol=7))
+colnames(Photo.Rb) <- c("Date", "Plate","Sample.ID","Chamber.ID","Light", "Intercept", "umol.L.min")
+```
+
+Load in the sample information file. It is important to have chambers in the order "A1, B1, C1, D1", rather than "A1, A2, A3, A4".  
+
+Read in sample and run information and merge into a master metadata file. 
+```{r}
+# Load PI curve sample metadata (i.e., which larvae were in which runs)
+Sample.Info <- read_csv(file = "../data/larval_pi_curves/larval_PIcurve_SDR_Sample_Info.csv")%>%
+  select(!TimeStart)%>%
+  select(!TimeEnd)%>%
+  select(!Notes)
+
+rename <- Sample.Info$Chamber.ID
+samp <- Sample.Info$Sample.ID
+
+plate <- as.numeric(str_sub(file.names, 28, 29))
+date <- str_sub(file.names, 1, str_length(file.names)-28) #grab date from file name
+
+# Load PI curve run metadata (i.e., light levels and interval times for each run)
+Run.Info <- read_csv(file = "../data/larval_pi_curves/larval_PIcurve_SDR_Run_Info.csv")
+
+Light_Values <- Run.Info$Light_Level
+
+# Join all coral and run metadata
+metadata <- full_join(Sample.Info, Run.Info) %>%
+  mutate(Date = as_date(as.character(Date), format = "%Y%m%d"))
+
+starttime<-Run.Info$IntervalStart
+endtime<-Run.Info$IntervalStop
+```
+
+Script is having an issue extracting the plate number from the file name. 
+
+Remove "Type" columns that have NA in them 
+```{r}
+metadata <- metadata %>%
+  drop_na(Type)
+```
+
+
+Run loop to extract slopes from photosynthesis data from each light level in each file name/plate. 
+
+```{r, results=FALSE, warning=FALSE, message=FALSE}
+
+for(file in 1:length(file.names)) { # for every file in list start at the first and run this following function
+  
+  for (i in Light_Values) { #in every file, for each light value 
+    
+  Photo.Data <-read.table(file.path(path.p,file.names[file]), skip = 56, header=T, sep=",", na.string="NA", fill = TRUE, as.is=TRUE, fileEncoding="latin1") #reads in the data files
+  Photo.Data$Temp <- Photo.Data[,31] #assigns temp column
+  Photo.Data$Time.Min. <- seq.int(from=0, to=((nrow(Photo.Data)*0.25)-0.25), by = 0.25) #set time in min
+  
+  Photo.Data <- Photo.Data[,-c(3:10,15:26)] #remove unused columns
+  
+  # extract start and end times for the respective plate 
+  
+  starttime<-Run.Info%>%
+    select(Plate, Light_Level, IntervalStart)%>%
+    filter(Plate==plate[file])%>%
+    filter(Light_Level==i)%>%
+    select(IntervalStart)%>%
+    as.data.frame()
+
+   starttime<-starttime[1,1]
+   
+   endtime<-Run.Info%>%
+    select(Plate, Light_Level, IntervalStop)%>%
+    filter(Plate==plate[file])%>%
+    filter(Light_Level==i)%>%
+    select(IntervalStop)%>%
+    as.data.frame()
+
+   endtime<-endtime[1,1]
+   
+  #filter by light interval - need to bind in dataframe to tell it which start and end time to use 
+  Photo.Data <- Photo.Data %>% #filters data by interval for light 
+     filter(Time.Min. > starttime)%>%
+     filter(Time.Min. < endtime) 
+  
+  Photo.Data.N <- Photo.Data[,3:6] #subset desired columns
+  
+  #add column names back in 
+  Photo.Data.N<-as.data.frame(Photo.Data.N)
+  
+  for(j in 1:(ncol(Photo.Data.N))){
+    model <- rankLocReg(
+      xall=Photo.Data$Time.Min., yall=as.numeric(Photo.Data.N[, j]), 
+      alpha=0.4, method="pc", verbose=TRUE) #extract slopes, percentile rank method with minimum window size of 0.4. This means that in order to fit a slope, it has to encompass at least 40% of available datapoints. 
+    
+    pdf(paste0("../output/larval_pi_curves/PhotosynthesisPlots/",date[file], "_Plate",plate[file],"_",rename[j],"_light", Light_Values[i],"_regression_trunc.pdf")) #generate output file names
+    plot(model)
+    dev.off()
+    
+    Photo.Rb[j,1] <- as.character(date[file]) #stores the date
+    Photo.Rb[j,2] <- as.character(plate[file]) #stores the run number
+    Photo.Rb[j,3] <- as.character(samp[j+(i-1)*ncol(Photo.Data.N)]) #stores the sample ID
+    Photo.Rb[j,4] <- as.character(rename[j]) #stores the chamber ID
+    Photo.Rb[j,5] <- as.character(i) #stores the chamber ID
+    Photo.Rb[j,6:7] <- model$allRegs[i,c(4,5)] #inserts slope and intercept in the dataframe
+    
+  }
+  
+  Photo.R <- rbind(Photo.R, Photo.Rb) #bind final data frame
+  }
+  
+}
+```
+
+There is some issue with the start/end times and the Time.Min. I think the issue is somewhere between lines 134-157, but I'm not totally sure. Every time I try to run the chunk above, it gives me this error: "Error in combn(lenX, 2) : n < m", which makes me think that the issue is with the time filtering step. Again, not totally sure. Might be best to talk to AH about this. 
+
+ZD: Got it working by removing the NA columns. The output files are labelled with wells A1-D1 instead of A3-D3 but I think otherwise it is correct. Could not yet fix it for light level 5 but getting somewhere.
+
+   
+
+
