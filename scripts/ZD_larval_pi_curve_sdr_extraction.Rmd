@@ -92,6 +92,7 @@ Sample.Info <- read_csv(file = "../data/larval_pi_curves/larval_PIcurve_SDR_Samp
   select(!Notes)
 
 rename <- Sample.Info$Chamber.ID
+rename_trunc <- rename[9:12]
 samp <- Sample.Info$Sample.ID
 
 plate <- as.numeric(str_sub(file.names, 28, 29))
@@ -168,14 +169,14 @@ for(file in 1:length(file.names)) { # for every file in list start at the first 
       xall=Photo.Data$Time.Min., yall=as.numeric(Photo.Data.N[, j]), 
       alpha=0.4, method="pc", verbose=TRUE) #extract slopes, percentile rank method with minimum window size of 0.4. This means that in order to fit a slope, it has to encompass at least 40% of available datapoints. 
     
-    pdf(paste0("../output/larval_pi_curves/PhotosynthesisPlots/",date[file], "_Plate",plate[file],"_",rename[j],"_light", Light_Values[i],"_regression_trunc.pdf")) #generate output file names
+    pdf(paste0("../output/larval_pi_curves/PhotosynthesisPlots/",date[file], "_Plate",plate[file],"_",rename_trunc[j],"_light", Light_Values[i],"_regression_trunc.pdf")) #generate output file names
     plot(model)
     dev.off()
     
     Photo.Rb[j,1] <- as.character(date[file]) #stores the date
     Photo.Rb[j,2] <- as.character(plate[file]) #stores the run number
     Photo.Rb[j,3] <- as.character(samp[j+(i-1)*ncol(Photo.Data.N)]) #stores the sample ID
-    Photo.Rb[j,4] <- as.character(rename[j]) #stores the chamber ID
+    Photo.Rb[j,4] <- as.character(rename_trunc[j]) #stores the chamber ID
     Photo.Rb[j,5] <- as.character(i) #stores the chamber ID
     Photo.Rb[j,6:7] <- model$allRegs[i,c(4,5)] #inserts slope and intercept in the dataframe
     
@@ -189,7 +190,7 @@ for(file in 1:length(file.names)) { # for every file in list start at the first 
 
 JA: There is some issue with the start/end times and the Time.Min. I think the issue is somewhere between lines 134-157, but I'm not totally sure. Every time I try to run the chunk above, it gives me this error: "Error in combn(lenX, 2) : n < m", which makes me think that the issue is with the time filtering step. Again, not totally sure. Might be best to talk to AH about this. 
 
-ZD: Got it working by removing the NA columns. The output files are labelled with wells A1-D1 instead of A3-D3 but I think otherwise it is correct. The issue was that we deleted certain rows where the data was incorrectly recorded, so trying to recode the Time.Min. column using the sequence code "#Photo.Data$Time.Min. <- seq.int(from=0, to=((nrow(Photo.Data)*0.25)-0.25), by = 0.25) #set time in min" was shifting the times by incorrect values. I have commented out these lines here and below and will attempt to run the script this way.
+ZD: Got it working by removing the NA columns.  The issue was that we deleted certain rows where the data was incorrectly recorded, so trying to recode the Time.Min. column using the sequence code "#Photo.Data$Time.Min. <- seq.int(from=0, to=((nrow(Photo.Data)*0.25)-0.25), by = 0.25) #set time in min" was shifting the times by incorrect values. I have commented out these lines here and below and will attempt to run the script this way.
 
 Calculate average temperature of each run and export to a table to confirm temperatures are not different between PAR values.    
 ```{r}
@@ -265,4 +266,37 @@ plot(Photo.R$umol.L.min~as.factor(Photo.R$Plate)*as.factor(Photo.R$Light), side 
 
 ```
 
+```{r, warning=FALSE, message=FALSE}
+Photo.Rates <- read.csv(file = "../output/larval_pi_curves/larval_pi_curves_sdr_rates_raw.csv") #read file back in so slopes don't have to be generated every time
+Photo.Rates = subset(Photo.Rates, select = -c(X) ) #remove empty column
 
+#format "run" column
+Photo.Rates<-Photo.Rates %>%
+  mutate(Plate = str_sub(Plate, 1, -1))
+Photo.Rates$Plate<-as.integer(Photo.Rates$Plate) #format as # rather than run #, set as integer
+```
+
+## Standardize and normalize  
+
+Merge rates files with sample info for testing and manipulation.  
+
+```{r, warning=FALSE, message=FALSE}
+
+oxygen<-full_join(Sample.Info, Photo.Rates) #add photosynthesis data
+colnames(oxygen)[colnames(oxygen) == 'Intercept'] <- 'Photo.Intercept' #rename to specify R
+colnames(oxygen)[colnames(oxygen) == 'umol.L.min'] <- 'P.umol.L.min' #rename to specify R
+
+#make unique ID column
+oxygen$unique<-paste(oxygen$Plate,"-",oxygen$Chamber.ID)
+Sample.Info$unique<-paste(Sample.Info$Plate,"-",Sample.Info$Chamber.ID)
+
+oxygen$Sample.ID<-Sample.Info$Sample.ID[match(oxygen$unique, Sample.Info$unique)]
+oxygen$SDR<-Sample.Info$SDR[match(oxygen$unique, Sample.Info$unique)]
+oxygen$Tank<-Sample.Info$Tank[match(oxygen$unique, Sample.Info$unique)]
+oxygen$Symbiont<-Sample.Info$Symbiont[match(oxygen$unique, Sample.Info$unique)]
+oxygen$Type<-Sample.Info$Type[match(oxygen$unique, Sample.Info$unique)]
+oxygen$Salinity<-Sample.Info$Salinity[match(oxygen$unique, Sample.Info$unique)]
+oxygen$Run<-Sample.Info$Run[match(oxygen$unique, Sample.Info$unique)]
+oxygen$Volume<-Sample.Info$Volume[match(oxygen$unique, Sample.Info$unique)]
+oxygen$Org.Number<-Sample.Info$Org.Number[match(oxygen$unique, Sample.Info$unique)]
+```
