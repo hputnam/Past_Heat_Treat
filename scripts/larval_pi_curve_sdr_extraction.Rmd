@@ -1,3 +1,8 @@
+---
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
 --
 title: "Larval Photosynthesis Rates Extraction with LoLinR - Bermuda 2023 - PI Curves"
 author: "Jill Ashey"
@@ -186,6 +191,8 @@ for(file in 1:length(file.names)) { # for every file in list start at the first 
 ```
 
 There is some issue with the start/end times and the Time.Min. I think the issue is somewhere between lines 134-157, but I'm not totally sure. Every time I try to run the chunk above, it gives me this error: "Error in combn(lenX, 2) : n < m", which makes me think that the issue is with the time filtering step. Again, not totally sure. Might be best to talk to AH about this. 
+
+^^ AH: The reason for this problem is that there is no data available in the data frame. If you look at the data frame its running all wells have "no sensor" in them. So there is no data for it to calculate.
 
 
    
