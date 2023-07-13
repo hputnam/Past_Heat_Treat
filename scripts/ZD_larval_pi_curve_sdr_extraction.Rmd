@@ -300,3 +300,84 @@ oxygen$Run<-Sample.Info$Run[match(oxygen$unique, Sample.Info$unique)]
 oxygen$Volume<-Sample.Info$Volume[match(oxygen$unique, Sample.Info$unique)]
 oxygen$Org.Number<-Sample.Info$Org.Number[match(oxygen$unique, Sample.Info$unique)]
 ```
+
+Remove samples that have inaccurate slope extraction for respiration rates (determined by PDF output files)  
+
+
+Account for volume to obtain umol per minute.   
+
+```{r, results=TRUE, warning=FALSE, message=FALSE}
+#Account for chamber volume to convert from umol L-1 m-1 to umol m-1. This removes per Liter
+oxygen$P.umol.min <- oxygen$P.umol.L.min * oxygen$Volume #calculate
+
+plot(as.factor(oxygen$Plate), oxygen$P.umol.L.min, xlab="Plate", ylab="rate") #photo rates
+```
+
+Subtract blank values. Average blank calculated for each run. Display mean blank value.  
+```{r}
+blank_data <- subset(oxygen, Type == "Blank") #subset to blank data only
+plot(as.factor(blank_data$Plate), blank_data$P.umol.min, xlab="Plate", ylab="umol O2 min-1") #blanks during dark phase
+
+#filter blank values 
+#blank_data <- blank_data%>%
+#  filter(P.umol.min> -0.0004)%>%
+#  filter(P.umol.min < 0.0003)
+
+plot(as.factor(blank_data$Plate), blank_data$P.umol.min, xlab="Plate", ylab="umol O2 min-1") #blanks during dark phase
+
+#display mean blank values
+mean(blank_data$P.umol.min, na.rm=TRUE) #mean P phase blanks
+
+photo.blnk <- aggregate(P.umol.min ~ Date*Plate, data=blank_data, mean) #calculate average blank during light for each run
+colnames(photo.blnk)[colnames(photo.blnk) == 'P.umol.min'] <- 'P.Blank.umol.min' #rename to specify blank for R
+
+oxygen <- full_join(oxygen, photo.blnk) #add R blanks to master
+```
+
+ZD: I had to remove the step below because our blank values did not fall within this range. Want to confirm this with Jill / Ariana.
+
+"
+  #filter blank values 
+  #blank_data <- blank_data%>%
+  #  filter(P.umol.min> -0.0004)%>%
+  #  filter(P.umol.min < 0.0003)
+"
+
+Subtract blank values to generate a "corrected" value for umol O2 min-1.  
+
+```{r, warning=FALSE, message=FALSE}
+oxygen$P.umol.min.corr<-oxygen$P.umol.min-oxygen$P.Blank.umol.min #subtract R blanks
+```
+
+```{r}
+plot(oxygen$P.umol.min.corr)
+```
+
+Normalize to biologically relevant measure. Here, normalize to number of larvae. This can be substituted or changed for larval size/volume as well.  
+
+```{r, warning=FALSE, message=FALSE}
+oxygen.bio <- oxygen %>% filter(Type == "Sample") #isolate only biological samples and drop unused factor levels 
+oxygen.bio <- droplevels(oxygen.bio) #drop unused factor levels
+
+#respiration
+oxygen.bio$P.umol.org.min <- oxygen.bio$P.umol.min.corr/oxygen.bio$Org.Number #calculate oxygen per organism 
+oxygen.bio$P.nmol.org.min <- oxygen.bio$P.umol.org.min*1000 #calculate nanomoles 
+
+```
+
+Plot values.  
+```{r}
+plot(oxygen.bio$P.nmol.org.min)
+```
+
+Add in relevant metadata. 
+```{r}
+oxygen.bio$PAR <- Run.Info$Light_Value[match(oxygen.bio$Light, Run.Info$Light_Level)]
+```
+
+Save as .csv file.  
+```{r, warning=FALSE, message=FALSE}
+write.csv(oxygen.bio, paste0("../output/larval_pi_curves/calculated_normalized_photo_rates.csv")) #save final file
+```
+
+
