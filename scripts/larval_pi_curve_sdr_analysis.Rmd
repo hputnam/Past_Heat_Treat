@@ -1,0 +1,235 @@
+--
+title: "Larval Photosynthesis Rates Extraction with LoLinR - Bermuda 2023 - PI Curves"
+author: "Zoe Dellaert"
+date: "2023-07-13"
+output: html_document
+---
+
+This script is analyzing photosynthesis rates under different light levels for P. asteroides larvae in Bermuda. The code is based on A. Huffmyer's PI [script](https://github.com/AHuffmyer/larval_symbiont_TPC/blob/main/scripts/larval_pi_curve_sdr_analysis.Rmd). Important note - this data was collected in 4 mL vials, not the 24-well plates.
+
+## Setup  
+
+Set up workspace, set options, and load required packages.    
+```{r}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+```{r, warning=FALSE, message=FALSE}
+## install packages if you dont already have them in your library
+if ("tidyverse" %in% rownames(installed.packages()) == 'FALSE') install.packages('tidyverse') 
+if ("car" %in% rownames(installed.packages()) == 'FALSE') install.packages('car') 
+if ("lme4" %in% rownames(installed.packages()) == 'FALSE') install.packages('lme4') 
+if ("lmerTest" %in% rownames(installed.packages()) == 'FALSE') install.packages('lmerTest') 
+if ("scales" %in% rownames(installed.packages()) == 'FALSE') install.packages('scales') 
+if ("cowplot" %in% rownames(installed.packages()) == 'FALSE') install.packages('cowplot') 
+if ("ggplot2" %in% rownames(installed.packages()) == 'FALSE') install.packages('ggplot2') 
+if ("effects" %in% rownames(installed.packages()) == 'FALSE') install.packages('effects') 
+if ("emmeans" %in% rownames(installed.packages()) == 'FALSE') install.packages('emmeans') 
+if ("multcomp" %in% rownames(installed.packages()) == 'FALSE') install.packages('multcomp') 
+if ("rTPC" %in% rownames(installed.packages()) == 'FALSE') remotes::install_github("padpadpadpad/rTPC")
+if ("ggstatsplot" %in% rownames(installed.packages()) == 'FALSE') remotes::install_github("IndrajeetPatil/ggstatsplot")
+if ("nls.multstart" %in% rownames(installed.packages()) == 'FALSE') install.packages('nls.multstart')
+if ("broom" %in% rownames(installed.packages()) == 'FALSE') install.packages('broom')
+
+#load packages
+library("ggplot2")
+library("tidyverse")
+library('car')
+library('lme4')
+library('lmerTest')
+library('scales')
+library('cowplot')
+library('rTPC')
+library('ggstatsplot')
+library('nls.multstart')
+library('broom')
+```
+
+# Data visualization and manipulation  
+
+Load data from LoLinR.    
+```{r, warning=FALSE, message=FALSE}
+pi_data<-read.csv("../output/larval_pi_curves/calculated_normalized_photo_rates.csv") #load data
+```
+
+Format data. 
+```{r, warning=FALSE, message=FALSE}
+#remove all rows of wells that did not have samples or blanks
+pi_data<-pi_data[!is.na(pi_data$Type),]
+
+#format columns
+pi_data$SDR<-as.factor(pi_data$SDR)
+pi_data$Plate<-as.factor(pi_data$Plate)
+```
+
+Look for outliers in the data.  
+
+```{r}
+boxplot(pi_data$P.nmol.org.min)
+
+boxplot(pi_data$P.nmol.org.min~pi_data$PAR)
+```
+
+Replace any net negative value with 0, since this indicates no photosynthesis. 
+```{r}
+pi_data <-pi_data%>%
+  mutate(P.nmol.org.min=if_else(P.nmol.org.min<0 & PAR>0, 0, P.nmol.org.min)) 
+```
+
+View data. Remove outliers. 
+```{r}
+boxplot(pi_data$P.nmol.org.min~pi_data$PAR)
+
+pi_data <- pi_data%>%filter(P.nmol.org.min<0.06)
+
+boxplot(pi_data$P.nmol.org.min)
+```
+
+Log transform the data.
+```{r}
+pi_data<-pi_data%>%
+  mutate(P.nmol.org.min=log10(P.nmol.org.min+1))
+
+boxplot(pi_data$P.nmol.org.min~pi_data$PAR)
+```
+
+Calculate mean temperature values for each run.    
+
+```{r}
+pi.temps<-read.csv("../output/larval_pi_curves/runs_temp.csv")
+pi.temps = subset(pi.temps, select = -c(X) ) #remove empty column
+
+pi_data$Plate<-as.integer(pi_data$Plate)
+```
+
+
+Add temperature data to master data frame.  
+```{r}
+pi_data<-left_join(pi_data,pi.temps)
+
+#round to 0.1°C 
+pi_data<-pi_data%>%
+  mutate(Temp.C=round(Temp.C,1))
+```
+
+
+# Plot photosynthesis over PAR treatments  
+
+Plot data with means   
+```{r}
+pi_plot1<-pi_data %>%
+    group_by(PAR)%>%
+    dplyr::summarise(mean=mean(P.nmol.org.min, na.rm=TRUE), sd=sd(P.nmol.org.min, na.rm=TRUE), N=length(P.nmol.org.min), se=sd/sqrt(N))%>%
+    
+    ggplot(., aes(x = as.factor(PAR), y = mean, group=interaction(PAR))) +
+    geom_hline(yintercept=0, linetype="dashed", color="black", linewidth=0.75)+
+    geom_point(aes(group=interaction(PAR), colour=PAR), size=6, position = position_dodge(0.4)) + 
+    geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=interaction(PAR)), width=0, linetype="solid", position=position_dodge(0.4), size=0.8, color="black")+
+    xlab("Light (PAR)") + 
+    #scale_color_manual(name="Symbiont", values=c("orange","brown4", "gray"))+
+    ylab(expression(bold(paste("P (nmol ", O[2], " larva"^-1, "min"^-1, ")")))) +
+    #ylim(0, 0.05)+
+    theme_classic() + 
+    theme(
+      legend.position="right",
+      axis.title=element_text(face="bold", size=16),
+      axis.text=element_text(size=12, color="black"), 
+      legend.title=element_text(face="bold", size=14), 
+      legend.text=element_text(size=12)
+      ); pi_plot1
+
+ggsave("../output/larval_pi_curves/figures/pi_means.png", pi_plot1, dpi=300, w=7, h=5, units="in")
+```
+
+Display with plate. 
+```{r}
+pi_plot1a<-pi_data %>%
+    group_by(PAR, Plate)%>%
+    dplyr::summarise(mean=mean(P.nmol.org.min, na.rm=TRUE), sd=sd(P.nmol.org.min, na.rm=TRUE), N=length(P.nmol.org.min), se=sd/sqrt(N))%>%
+    
+    ggplot(., aes(x = as.factor(PAR), y = mean, group=interaction(PAR))) +
+    facet_wrap(~Plate)+
+    geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
+    geom_point(aes(group=interaction(PAR), colour=PAR), size=6, position = position_dodge(0.4)) + 
+    geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=interaction(PAR)), width=0, linetype="solid", position=position_dodge(0.4), size=0.8, color="black")+
+    xlab("Light (PAR)") + 
+    #scale_color_manual(name="Symbiont", values=c("orange","brown4", "gray"))+
+    ylab(expression(bold(paste("P (nmol ", O[2], " larva"^-1, "min"^-1, ")")))) +
+    #ylim(0, 0.05)+
+    theme_classic() + 
+    theme(
+      legend.position="right",
+      axis.title=element_text(face="bold", size=16),
+      axis.text=element_text(size=12, color="black"), 
+      legend.title=element_text(face="bold", size=14), 
+      legend.text=element_text(size=12)
+      )
+
+pi_plot1a
+```
+
+Plot data with a loess line   
+```{r}
+pi_plot2<-pi_data %>%
+    
+    ggplot(., aes(x = as.factor(PAR), y = P.nmol.org.min)) +
+    geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
+    geom_smooth(method="loess", alpha=0.4, se=FALSE)+
+    xlab("Light (PAR)") + 
+    #scale_color_manual(name="Symbiont", values=c("orange","brown4", "gray"))+
+    ylab(expression(bold(paste("P (nmol ", O[2], " larva"^-1, "min"^-1, ")")))) +
+    #ylim(0, 0.05)+
+    theme_classic() + 
+    theme(
+      legend.position="right",
+      axis.title=element_text(face="bold", size=16),
+      axis.text=element_text(size=12, color="black"), 
+      legend.title=element_text(face="bold", size=14), 
+      legend.text=element_text(size=12)
+      ); pi_plot2
+
+ggsave("../output/larval_pi_curves/figures/pi_loess.png", pi_plot2, dpi=300, w=7, h=5, units="in")
+```
+
+
+# View respiration 
+
+View by plate. 
+```{r}
+pi_plot3<-pi_data %>%
+    group_by(PAR)%>%
+    filter(PAR=="0")%>%
+    dplyr::summarise(mean=mean(P.nmol.org.min, na.rm=TRUE)*-1, sd=sd(P.nmol.org.min, na.rm=TRUE), N=length(P.nmol.org.min), se=sd/sqrt(N))%>%
+    
+    ggplot(., aes(x = as.factor(PAR), y = mean, group=interaction(PAR))) +
+    #facet_wrap(~Plate)+
+    geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
+    geom_point(aes(group=interaction(PAR)), size=6, position = position_dodge(0.4)) + 
+    geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=interaction(PAR)), width=0, linetype="solid", position=position_dodge(0.4), size=0.8, color="black")+
+    xlab("Light (PAR)") + 
+    #scale_color_manual(name="Symbiont", values=c("orange","brown4", "gray"))+
+    ylab(expression(bold(paste("R (nmol ", O[2], " larva"^-1, "min"^-1, ")")))) +
+    #ylim(0, 0.05)+
+    theme_classic() + 
+    theme(
+      legend.position="right",
+      axis.title=element_text(face="bold", size=16),
+      axis.text=element_text(size=12, color="black"), 
+      legend.title=element_text(face="bold", size=14), 
+      legend.text=element_text(size=12)
+      )
+pi_plot3
+```
+
+
+Run anova on values 
+```{r}
+model<-aov(P.nmol.org.min~as.factor(PAR), data=pi_data)
+summary(model)
+
+library("emmeans")
+
+emm<-emmeans(model, ~ PAR)
+pairs(emm)
+```
+
