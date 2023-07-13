@@ -129,7 +129,9 @@ for(file in 1:length(file.names)) { # for every file in list start at the first 
     
   Photo.Data <-read.table(file.path(path.p,file.names[file]), skip = 56, header=T, sep=",", na.string="NA", fill = TRUE, as.is=TRUE, fileEncoding="latin1") #reads in the data files
   Photo.Data$Temp <- Photo.Data[,31] #assigns temp column
-  Photo.Data$Time.Min. <- seq.int(from=0, to=((nrow(Photo.Data)*0.25)-0.25), by = 0.25) #set time in min
+  #Photo.Data$Time.Min. <- seq.int(from=0, to=((nrow(Photo.Data)*0.25)-0.25), by = 0.25) #set time in min
+   Photo.Data$Time.Min <- seq.int(from=0, to=((nrow(Photo.Data)*0.25)-0.25), by = 0.25) #set time in min
+  
   
   Photo.Data <- Photo.Data[,-c(3:10,15:26)] #remove unused columns
   
@@ -189,7 +191,9 @@ for(file in 1:length(file.names)) { # for every file in list start at the first 
 
 There is some issue with the start/end times and the Time.Min. I think the issue is somewhere between lines 134-157, but I'm not totally sure. Every time I try to run the chunk above, it gives me this error: "Error in combn(lenX, 2) : n < m", which makes me think that the issue is with the time filtering step. Again, not totally sure. Might be best to talk to AH about this. 
 
-ZD: Got it working by removing the NA columns. The output files are labelled with wells A1-D1 instead of A3-D3 but I think otherwise it is correct. Could not yet fix it for light level 5 but getting somewhere.
+ZD: Got it working by removing the NA columns. The output files are labelled with wells A1-D1 instead of A3-D3 but I think otherwise it is correct. Also had to remove the "." after Photo.Data$Time.Min, which fixed the time issue.
+
+
 
    
 
