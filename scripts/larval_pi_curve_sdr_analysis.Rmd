@@ -1,14 +1,14 @@
+
 ---
-output: html_document
-editor_options: 
-  chunk_output_type: console
----
---
 title: "Larval Photosynthesis Rates Extraction with LoLinR - Bermuda 2023 - PI Curves"
 author: "Zoe Dellaert"
 date: "2023-07-13"
 output: html_document
 ---
+
+NOTE: Under "knit" set the "knit directory" for "project directory" for all paths below to work. 
+
+
 
 This script is analyzing photosynthesis rates under different light levels for P. asteroides larvae in Bermuda. The code is based on A. Huffmyer's PI [script](https://github.com/AHuffmyer/larval_symbiont_TPC/blob/main/scripts/larval_pi_curve_sdr_analysis.Rmd). Important note - this data was collected in 4 mL vials, not the 24-well plates.
 
@@ -54,7 +54,7 @@ library('broom')
 
 Load data from LoLinR.    
 ```{r, warning=FALSE, message=FALSE}
-pi_data<-read.csv("../output/larval_pi_curves/calculated_normalized_photo_rates.csv") #load data
+pi_data<-read.csv("output/larval_pi_curves/calculated_normalized_photo_rates.csv") #load data
 ```
 
 Format data. 
@@ -101,7 +101,7 @@ boxplot(pi_data$P.nmol.org.min~pi_data$PAR)
 Calculate mean temperature values for each run.    
 
 ```{r}
-pi.temps<-read.csv("../output/larval_pi_curves/runs_temp.csv")
+pi.temps<-read.csv("output/larval_pi_curves/runs_temp.csv")
 pi.temps = subset(pi.temps, select = -c(X) ) #remove empty column
 
 pi_data$Plate<-as.integer(pi_data$Plate)
@@ -143,7 +143,7 @@ pi_plot1<-pi_data %>%
       legend.text=element_text(size=12)
       ); pi_plot1
 
-ggsave("../output/larval_pi_curves/figures/pi_means.png", pi_plot1, dpi=300, w=7, h=5, units="in")
+ggsave("output/larval_pi_curves/figures/pi_means.png", pi_plot1, dpi=300, w=7, h=5, units="in")
 ```
 
 Display with plate. 

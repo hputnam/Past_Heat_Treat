@@ -1,9 +1,18 @@
+---
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
 --
 title: "Larval Photosynthesis Rates Extraction with LoLinR - Bermuda 2023 - PI Curves"
 author: "Jill Ashey"
 date: "2023-07-13"
 output: html_document
 ---
+
+
+NOTE: Under "knit" set the "knit directory" for "project directory" for all paths below to work. 
+
 
 This script is extracting photosynthesis rates under different light levels for P. asteroides larvae in Bermuda. The code is based on A. Huffmyer's PI [script](https://github.com/AHuffmyer/larval_symbiont_TPC/blob/main/scripts/larval_pi_curve_sdr_extraction.Rmd). Important note - this data was collected in 4 mL vials, not the 24-well plates.
 
@@ -52,7 +61,7 @@ library("tidyverse")
 Set the path of all respirometry files within the R project.   
 
 ```{r, warning=FALSE, message=FALSE}
-path.p<-"../data/larval_pi_curves/runs" #location of files
+path.p<-"data/larval_pi_curves/runs" #location of files
 ```
 
 Bring in the file names.
@@ -64,7 +73,7 @@ file.names<-basename(list.files(path = path.p, pattern = "csv$", recursive = TRU
 
 Bring in the run metadata. 
 ```{r}
-run_metadata<-read.csv("../data/larval_pi_curves/larval_PIcurve_SDR_Run_Info.csv")
+run_metadata<-read.csv("data/larval_pi_curves/larval_PIcurve_SDR_Run_Info.csv")
 ```
 
 ## Extract photosynthesis rates  
@@ -86,20 +95,20 @@ Load in the sample information file. It is important to have chambers in the ord
 Read in sample and run information and merge into a master metadata file. 
 ```{r}
 # Load PI curve sample metadata (i.e., which larvae were in which runs)
-Sample.Info <- read_csv(file = "../data/larval_pi_curves/larval_PIcurve_SDR_Sample_Info.csv")%>%
+Sample.Info <- read_csv(file = "data/larval_pi_curves/larval_PIcurve_SDR_Sample_Info.csv")%>%
   select(!TimeStart)%>%
   select(!TimeEnd)%>%
   select(!Notes)
 
 rename <- Sample.Info$Chamber.ID
-rename_trunc <- rename[9:12]
+rename_trunc <- rename[9:12] # the rename cannot be truncated because the data are running in all columns of the data sheet and must have the same order as the data sheet. It is not filtering by well using the rename vector 
 samp <- Sample.Info$Sample.ID
 
 plate <- as.numeric(str_sub(file.names, 28, 29))
 date <- str_sub(file.names, 1, str_length(file.names)-28) #grab date from file name
 
 # Load PI curve run metadata (i.e., light levels and interval times for each run)
-Run.Info <- read_csv(file = "../data/larval_pi_curves/larval_PIcurve_SDR_Run_Info.csv")
+Run.Info <- read_csv(file = "data/larval_pi_curves/larval_PIcurve_SDR_Run_Info.csv")
 
 Light_Values <- Run.Info$Light_Level
 
@@ -169,7 +178,7 @@ for(file in 1:length(file.names)) { # for every file in list start at the first 
       xall=Photo.Data$Time.Min., yall=as.numeric(Photo.Data.N[, j]), 
       alpha=0.4, method="pc", verbose=TRUE) #extract slopes, percentile rank method with minimum window size of 0.4. This means that in order to fit a slope, it has to encompass at least 40% of available datapoints. 
     
-    pdf(paste0("../output/larval_pi_curves/PhotosynthesisPlots/",date[file], "_Plate",plate[file],"_",rename_trunc[j],"_light", Light_Values[i],"_regression_trunc.pdf")) #generate output file names
+    pdf(paste0("output/larval_pi_curves/PhotosynthesisPlots/",date[file], "_Plate",plate[file],"_",rename_trunc[j],"_light", Light_Values[i],"_regression_trunc.pdf")) #generate output file names
     plot(model)
     dev.off()
     
@@ -251,7 +260,7 @@ for(file in 1:length(file.names)) {
 }
 
 }
-write.csv(Temp.P, paste0("../output/larval_pi_curves/runs_temp.csv")) #save respiration rate data
+write.csv(Temp.P, paste0("output/larval_pi_curves/runs_temp.csv")) #save respiration rate data
 ```
 
 
@@ -260,14 +269,14 @@ Save photosynthesis data frames.
 ```{r, results=FALSE, warning=FALSE, message=FALSE}
 Photo.R <- Photo.R[-1,] #remove empty row
 
-write.csv(Photo.R, paste0("../output/larval_pi_curves/larval_pi_curves_sdr_rates_raw.csv")) #save respiration rate data
+write.csv(Photo.R, paste0("output/larval_pi_curves/larval_pi_curves_sdr_rates_raw.csv")) #save respiration rate data
 
 plot(Photo.R$umol.L.min~as.factor(Photo.R$Plate)*as.factor(Photo.R$Light), side = 2, las = 2, xlab="" )
 
 ```
 
 ```{r, warning=FALSE, message=FALSE}
-Photo.Rates <- read.csv(file = "../output/larval_pi_curves/larval_pi_curves_sdr_rates_raw.csv") #read file back in so slopes don't have to be generated every time
+Photo.Rates <- read.csv(file = "output/larval_pi_curves/larval_pi_curves_sdr_rates_raw.csv") #read file back in so slopes don't have to be generated every time
 Photo.Rates = subset(Photo.Rates, select = -c(X) ) #remove empty column
 
 #format "run" column
@@ -292,8 +301,8 @@ Sample.Info$unique<-paste(Sample.Info$Plate,"-",Sample.Info$Chamber.ID)
 
 oxygen$Sample.ID<-Sample.Info$Sample.ID[match(oxygen$unique, Sample.Info$unique)]
 oxygen$SDR<-Sample.Info$SDR[match(oxygen$unique, Sample.Info$unique)]
-oxygen$Tank<-Sample.Info$Tank[match(oxygen$unique, Sample.Info$unique)]
-oxygen$Symbiont<-Sample.Info$Symbiont[match(oxygen$unique, Sample.Info$unique)]
+#oxygen$Tank<-Sample.Info$Tank[match(oxygen$unique, Sample.Info$unique)]
+#oxygen$Symbiont<-Sample.Info$Symbiont[match(oxygen$unique, Sample.Info$unique)]
 oxygen$Type<-Sample.Info$Type[match(oxygen$unique, Sample.Info$unique)]
 oxygen$Salinity<-Sample.Info$Salinity[match(oxygen$unique, Sample.Info$unique)]
 oxygen$Run<-Sample.Info$Run[match(oxygen$unique, Sample.Info$unique)]
@@ -301,7 +310,16 @@ oxygen$Volume<-Sample.Info$Volume[match(oxygen$unique, Sample.Info$unique)]
 oxygen$Org.Number<-Sample.Info$Org.Number[match(oxygen$unique, Sample.Info$unique)]
 ```
 
+Convert air saturation rates to concentration values using respR package. 
+```{r}
+oxygen<-oxygen%>%
+ mutate(P.umol.L.min=respR::convert_DO(P.umol.L.min, from = "%Air", to = "umol/L", t = 28, S = Salinity))
+```
+
 Remove samples that have inaccurate slope extraction for respiration rates (determined by PDF output files)  
+```{r}
+#not done here 
+```
 
 
 Account for volume to obtain umol per minute.   
@@ -379,7 +397,7 @@ oxygen.bio$PAR <- Run.Info$Light_Value[match(oxygen.bio$Light, Run.Info$Light_Le
 
 Save as .csv file.  
 ```{r, warning=FALSE, message=FALSE}
-write.csv(oxygen.bio, paste0("../output/larval_pi_curves/calculated_normalized_photo_rates.csv")) #save final file
+write.csv(oxygen.bio, paste0("output/larval_pi_curves/calculated_normalized_photo_rates.csv")) #save final file
 ```
 
 
