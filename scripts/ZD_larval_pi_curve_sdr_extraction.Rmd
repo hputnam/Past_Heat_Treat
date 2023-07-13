@@ -130,8 +130,6 @@ for(file in 1:length(file.names)) { # for every file in list start at the first 
   Photo.Data <-read.table(file.path(path.p,file.names[file]), skip = 56, header=T, sep=",", na.string="NA", fill = TRUE, as.is=TRUE, fileEncoding="latin1") #reads in the data files
   Photo.Data$Temp <- Photo.Data[,31] #assigns temp column
   #Photo.Data$Time.Min. <- seq.int(from=0, to=((nrow(Photo.Data)*0.25)-0.25), by = 0.25) #set time in min
-   Photo.Data$Time.Min <- seq.int(from=0, to=((nrow(Photo.Data)*0.25)-0.25), by = 0.25) #set time in min
-  
   
   Photo.Data <- Photo.Data[,-c(3:10,15:26)] #remove unused columns
   
@@ -189,12 +187,82 @@ for(file in 1:length(file.names)) { # for every file in list start at the first 
 }
 ```
 
-There is some issue with the start/end times and the Time.Min. I think the issue is somewhere between lines 134-157, but I'm not totally sure. Every time I try to run the chunk above, it gives me this error: "Error in combn(lenX, 2) : n < m", which makes me think that the issue is with the time filtering step. Again, not totally sure. Might be best to talk to AH about this. 
+JA: There is some issue with the start/end times and the Time.Min. I think the issue is somewhere between lines 134-157, but I'm not totally sure. Every time I try to run the chunk above, it gives me this error: "Error in combn(lenX, 2) : n < m", which makes me think that the issue is with the time filtering step. Again, not totally sure. Might be best to talk to AH about this. 
 
-ZD: Got it working by removing the NA columns. The output files are labelled with wells A1-D1 instead of A3-D3 but I think otherwise it is correct. Also had to remove the "." after Photo.Data$Time.Min, which fixed the time issue.
+ZD: Got it working by removing the NA columns. The output files are labelled with wells A1-D1 instead of A3-D3 but I think otherwise it is correct. The issue was that we deleted certain rows where the data was incorrectly recorded, so trying to recode the Time.Min. column using the sequence code "#Photo.Data$Time.Min. <- seq.int(from=0, to=((nrow(Photo.Data)*0.25)-0.25), by = 0.25) #set time in min" was shifting the times by incorrect values. I have commented out these lines here and below and will attempt to run the script this way.
 
+Calculate average temperature of each run and export to a table to confirm temperatures are not different between PAR values.    
+```{r}
+# list files 
+file.names<-basename(list.files(path = path.p, pattern = "csv$", recursive = TRUE)) 
 
+#generate matrix to populate
+Temp.P <- data.frame(matrix(NA, ncol=4))
+colnames(Temp.P) <- c("Date", "Plate","Temp.C", "Light")
 
+Temp.Pb <- data.frame(matrix(NA, ncol=4))
+colnames(Temp.Pb) <- c("Date", "Plate","Temp.C", "Light")
+
+#read in temps and generate mean values for each step of the light curve  
+for(file in 1:length(file.names)) { 
+  
+  for(i in Light_Values) {# for every file in list start at the first and run this following function
+  
+  Temp.Data <-read.table(file.path(path.p,file.names[file]), skip = 56, header=T, sep=",", na.string="NA", fill = TRUE, as.is=TRUE, fileEncoding="latin1") #reads in the data files
+  Temp.Data$Temp <- Temp.Data[,31] #assigns temp column
+  #Temp.Data$Time.Min. <- seq.int(from=0, to=((nrow(Temp.Data)*0.25)-0.25), by = 0.25) #set time in min
+  
+  Temp.Data <- Temp.Data[,-c(3:10,15:26)] #remove unused columns
+  
+  
+  starttime<-Run.Info%>%
+    select(Plate, Light_Level, IntervalStart)%>%
+    filter(Plate==plate[file])%>%
+    filter(Light_Level==i)%>%
+    select(IntervalStart)%>%
+    as.data.frame()
+
+   starttime<-starttime[1,1]
    
+   endtime<-Run.Info%>%
+    select(Plate, Light_Level, IntervalStop)%>%
+    filter(Plate==plate[file])%>%
+    filter(Light_Level==i)%>%
+    select(IntervalStop)%>%
+    as.data.frame()
+
+   endtime<-endtime[1,1]
+   
+  #filter by light interval - need to bind in dataframe to tell it which start and end time to use 
+  Temp.Data <- Temp.Data %>% #filters data by interval for light 
+     filter(Time.Min. > starttime)%>%
+     filter(Time.Min. < endtime) 
+  
+    Temp.Pb[j,1] <- as.character(date[file]) #stores the date
+    Temp.Pb[j,2] <- as.character(plate[file]) #stores the run number
+    Temp.Pb[j,3] <- mean(Temp.Data$Temp) #stores the sample ID
+    Temp.Pb[j,4] <- mean(Light_Values[i]) #stores the sample ID
+    
+    
+    Temp.P <- rbind(Temp.P, Temp.Pb) #bind final data frame
+    Temp.P <- na.omit(Temp.P)
+  
+}
+
+}
+write.csv(Temp.P, paste0("../output/larval_pi_curves/runs_temp.csv")) #save respiration rate data
+```
+
+
+Save photosynthesis data frames.  
+
+```{r, results=FALSE, warning=FALSE, message=FALSE}
+Photo.R <- Photo.R[-1,] #remove empty row
+
+write.csv(Photo.R, paste0("../output/larval_pi_curves/larval_pi_curves_sdr_rates_raw.csv")) #save respiration rate data
+
+plot(Photo.R$umol.L.min~as.factor(Photo.R$Plate)*as.factor(Photo.R$Light), side = 2, las = 2, xlab="" )
+
+```
 
 
