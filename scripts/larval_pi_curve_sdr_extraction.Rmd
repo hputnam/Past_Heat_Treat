@@ -5,6 +5,8 @@ date: "2023-07-13"
 output: html_document
 ---
 
+This script is extracting photosynthesis rates under different light levels for P. asteroides larvae in Bermuda. The code is based on A. Huffmyer's PI [script](https://github.com/AHuffmyer/larval_symbiont_TPC/blob/main/scripts/larval_pi_curve_sdr_extraction.Rmd). Important note - this data was collected in 4 mL vials, not the 24-well plates.
+
 ## Setup  
 
 Set up workspace, set options, and load required packages.    
@@ -92,7 +94,7 @@ Sample.Info <- read_csv(file = "data/larval_pi_curves/larval_PIcurve_SDR_Sample_
 rename <- Sample.Info$Chamber.ID
 samp <- Sample.Info$Sample.ID
 
-plate <- as.numeric(str_sub(file.names, 27, 29))
+plate <- as.numeric(str_sub(file.names, 28, 29))
 date <- str_sub(file.names, 1, str_length(file.names)-28) #grab date from file name
 
 # Load PI curve run metadata (i.e., light levels and interval times for each run)
@@ -107,6 +109,8 @@ metadata <- full_join(Sample.Info, Run.Info) %>%
 starttime<-Run.Info$IntervalStart
 endtime<-Run.Info$IntervalStop
 ```
+
+Script is having an issue extracting the plate number from the file name. 
 
 Remove "Type" columns that have NA in them 
 ```{r}
@@ -181,6 +185,7 @@ for(file in 1:length(file.names)) { # for every file in list start at the first 
 }
 ```
 
+There is some issue with the start/end times and the Time.Min. I think the issue is somewhere between lines 134-157, but I'm not totally sure. Every time I try to run the chunk above, it gives me this error: "Error in combn(lenX, 2) : n < m", which makes me think that the issue is with the time filtering step. Again, not totally sure. Might be best to talk to AH about this. 
 
 
    
