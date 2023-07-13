@@ -72,8 +72,7 @@ boxplot(pi_data$P.nmol.org.min~pi_data$PAR)
 
 Replace any net negative value with 0, since this indicates no photosynthesis. 
 ```{r}
-pi_data <-pi_data%>%
-  mutate(P.nmol.org.min=if_else(P.nmol.org.min<0 & PAR>0, 0, P.nmol.org.min)) 
+pi_data <-pi_data %>% mutate(P.nmol.org.min=if_else(P.nmol.org.min<0 & PAR>0, 0, P.nmol.org.min)) 
 ```
 
 View data. Remove outliers. 
@@ -83,6 +82,7 @@ boxplot(pi_data$P.nmol.org.min~pi_data$PAR)
 pi_data <- pi_data%>%filter(P.nmol.org.min<0.06)
 
 boxplot(pi_data$P.nmol.org.min)
+
 ```
 
 Log transform the data.

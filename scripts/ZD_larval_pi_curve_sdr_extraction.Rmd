@@ -318,6 +318,8 @@ Subtract blank values. Average blank calculated for each run. Display mean blank
 blank_data <- subset(oxygen, Type == "Blank") #subset to blank data only
 plot(as.factor(blank_data$Plate), blank_data$P.umol.min, xlab="Plate", ylab="umol O2 min-1") #blanks during dark phase
 
+plot(as.factor(blank_data$Light), blank_data$P.umol.min, xlab="Plate", ylab="umol O2 min-1") #blanks during dark phase
+
 #filter blank values 
 #blank_data <- blank_data%>%
 #  filter(P.umol.min> -0.0004)%>%
