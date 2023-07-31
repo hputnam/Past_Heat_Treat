@@ -15,7 +15,7 @@ Date,Run,Temperature,Light_Level,Light_Value,TimeStart,TimeStop,TimeInterval,Int
 20230715,7,28,2,0,15:37,16:14,0:37,,,
 20230716,8,28,1,415,15:15,15:51,0:36,,,
 20230716,8,28,2,0,15:54,16:34,0:40,,,at 21min the plate was moved by me off the sensor acccidentially and 15secs ater 21mins needs to be cut
-20230717,9,28,1,415,10:42,11:19,0:37 
+20230717,9,28,1,415,10:42,11:19,0:37,,, 
 20230717,9,28,2,0,11:23,11:58,0:39,,,
 20230717,10,30,1,415,,,,,,
 20230717,10,30,2,0,13:12,13:46,0:34,,,
