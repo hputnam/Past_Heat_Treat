@@ -31,8 +31,6 @@ Read in daily measurements file.
 ```{r}
 daily<-read_csv("data/enviromental/daily_measurements.csv")
 daily$date<-as.Date(daily$date, format="%m/%d/%y")
-daily$Squarical<-as.factor(daily$Squarical)
-daily$Basin <- as.factor(daily$Basin)
 daily$tris.date<-as.character(daily$tris.date)
 
 # remove values with NA for temp, salinity and pH
@@ -61,7 +59,7 @@ pHSlope<-pHcalib %>%
 pH is now calculated as Total pH in the "pH" column. Now select the desired columns to analyze further.  
 ```{r}
 daily_calc<-pHSlope%>%
-  dplyr::select(date, time, Basin, Squarical, group, temp.C, sal.psu, par, flow.mL5s, ph.nbs, pH.total)
+  dplyr::select(date, time, Type, group, temp.C, sal.psu, par, flow.mL5s, ph.nbs, pH.total)
 ```
 
 ## Calculate flow and par
@@ -110,9 +108,9 @@ daily_treatment<-daily_calc.long %>%
   
 ggsave(filename="output/environmental/treatment_daily_measurements.png", plot=daily_treatment, dpi=300, width=6, height=8, units="in")
 
-## Basin
-daily_basin<-daily_calc.long %>%
-  ggplot(aes(x=date, y=value, colour=Basin))+
+## Tank type
+daily_tank<-daily_calc.long %>%
+  ggplot(aes(x=date, y=value, colour=Type))+
   geom_point(size=2)+
   #geom_vline(xintercept = as.numeric(ymd("2022-10-19")), linetype="dashed", 
                 #color = "black", size=0.5)+
@@ -121,47 +119,155 @@ daily_basin<-daily_calc.long %>%
   #scale_colour_manual(values=c("orange", "brown4"))+
   xlab("Date")+
   facet_grid(metric ~ ., scales = "free")+
-  theme_bw(); daily_basin
+  theme_bw(); daily_tank
   
-ggsave(filename="output/environmental/basin_daily_measurements.png", plot=daily_basin, dpi=300, width=6, height=8, units="in")
-
-## Squarical
-daily_squarical<-daily_calc.long %>%
-  ggplot(aes(x=date, y=value, colour=Squarical))+
-  geom_point(size=2)+
-  #geom_vline(xintercept = as.numeric(ymd("2022-10-19")), linetype="dashed", 
-                #color = "black", size=0.5)+
-  #geom_vline(xintercept = as.numeric(ymd("2022-10-24")), linetype="solid", 
-                #color = "black", size=0.5)+
-  #scale_colour_manual(values=c("orange", "brown4"))+
-  xlab("Date")+
-  facet_grid(metric ~ ., scales = "free")+
-  theme_bw(); daily_squarical
-  
-ggsave(filename="output/environmental/squarical_daily_measurements.png", plot=daily_squarical, dpi=300, width=6, height=8, units="in")
+ggsave(filename="output/environmental/tank_daily_measurements.png", plot=daily_tank, dpi=300, width=6, height=8, units="in")
 ```
 
-Plot by treatment summarizing tanks within each group    
+Plot means by basin and squarical.      
 ```{r}
-daily_treatment<-daily_calc.long %>%
-  ggplot(aes(x=date, y=value, colour=group, group=interaction(Basin, date)))+
+# Plot by basin
+basin_daily_treatment_summary<-daily_calc.long %>%
+  #filter(is.na(Squarical)) %>%
+  filter(Type %in% c("Basin 1", "Basin 2", "Basin 3", "Basin 4", "Basin 5", "Basin 6"))%>%
+  
+  ggplot(aes(x=Type, y=value, colour=group))+
   geom_point()+
   geom_boxplot()+
-  #geom_vline(xintercept = as.numeric(ymd("2022-10-19")), linetype="dashed", 
-                #color = "black", size=0.5)+
-  #geom_vline(xintercept = as.numeric(ymd("2022-10-24")), linetype="solid", 
-                #color = "black", size=0.5)+
-  #scale_colour_manual(values=c("orange", "brown4"))+
+  scale_colour_manual(name="", values=c("blue", "red"))+
   xlab("Date")+
-  facet_grid(metric ~ ., scales = "free")+
-  theme_bw(); daily_treatment
+  ylab("Value")+
+  facet_wrap(~ metric, scales = "free")+
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +  # Rotate text by 45 degrees
+  theme_classic(); basin_daily_treatment_summary
 
-ggsave(filename="output/environmental/boxplot_daily_measurements.png", plot=daily_treatment, dpi=300, width=6, height=8, units="in")
+ggsave(filename="output/environmental/basin_summary_daily_measurements.png", plot=basin_daily_treatment_summary, dpi=300, width=9, height=6, units="in")
+
+# Plot by squarical
+squarical_daily_treatment_summary<-daily_calc.long %>%
+  #filter(is.na(Squarical)) %>%
+  filter(Type %in% c("Squarical 1", "Squarical 2", "Squarical 3", "Squarical 4", "Squarical 5", "Squarical 6", "Squarical 7", "Squarical 8", "Squarical 9", "Squarical 10", "Squarical 11", "Squarical 12", "Squarical 13", "Squarical 14", "Squarical 15", "Squarical 16"))%>%
+  
+  ggplot(aes(x=Type, y=value, colour=group))+
+  geom_point()+
+  geom_boxplot()+
+  scale_colour_manual(name="", values=c("blue", "red"))+
+  xlab("Date")+
+  ylab("Value")+
+  facet_wrap(~ metric, scales = "free")+
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +  # Rotate text by 45 degrees
+  theme_classic(); squarical_daily_treatment_summary
+
+ggsave(filename="output/environmental/squarical_summary_daily_measurements.png", plot=squarical_daily_treatment_summary, dpi=300, width=9, height=6, units="in")
 ```
 
+## Test for differences   
 
+Use the daily_calc df created earlier.
 
+Test for differences between treatments.
+```{r}
+daily_calc%>%
+  aov(flow.L.min~group, data=.)%>%
+  summary()
+ 
+daily_calc%>%
+  aov(par.adj~group, data=.)%>%
+  summary()
 
+daily_calc%>%
+  aov(pH.total~group, data=.)%>%
+  summary()
+
+daily_calc%>%
+  aov(ph.nbs~group, data=.)%>%
+  summary()
+
+daily_calc%>%
+  aov(sal.psu~group, data=.)%>%
+  summary()
+# significantly different by treatment
+
+daily_calc%>%
+  aov(temp.C~group, data=.)%>%
+  summary()
+# significantly different by treatment
+```
+
+Test for differences between tank type and treatment 
+```{r}
+daily_calc%>%
+  #filter(Type %in% c("Basin 1", "Basin 2", "Basin 3", "Basin 4", "Basin 5", "Basin 6"))%>%
+  aov(flow.L.min~Type*group, data=.)
+ 
+daily_calc%>%
+  aov(par.adj~Type*group, data=.)%>%
+  summary()
+
+daily_calc%>%
+  aov(pH.total~Type*group, data=.)%>%
+  summary()
+# significantly different by tank type
+
+daily_calc%>%
+  aov(ph.nbs~Type*group, data=.)%>%
+  summary()
+# significantly different by tank type
+
+daily_calc%>%
+  aov(sal.psu~Type*group, data=.)%>%
+  summary()
+
+daily_calc%>%
+  aov(temp.C~Type*group, data=.)%>%
+  summary()
+# significantly different by tank type and treatment
+```
+
+Remove Basins from tank Type and test differences by squarical  
+```{r}
+squarical_daily <- daily_calc %>%
+  dplyr::filter(!str_detect(Type, "Basin"))
+
+# Run stats 
+squarical_daily%>%
+  aov(flow.L.min~Type, data=.) %>%
+  summary()
+ 
+squarical_daily%>%
+  aov(par.adj~Type, data=.) %>%
+  summary()
+
+squarical_daily%>%
+  aov(pH.total~Type, data=.) %>%
+  summary()
+
+squarical_daily%>%
+  aov(ph.nbs~Type, data=.) %>%
+  summary() 
+
+squarical_daily%>%
+  aov(sal.psu~Type, data=.) %>%
+  summary()
+
+squarical_daily%>%
+  aov(temp.C~Type, data=.) %>%
+  summary()
+```
+
+## Summarize daily measurements  
+
+Calculate descriptive statistics   
+```{r}
+summary<-daily_calc%>%
+  group_by(Type, group)%>%
+  #select(!tank)%>%
+  select(!date)%>%
+  select(!time)%>%
+  summarise(across(everything(), list(mean = mean, sd = sd), na.rm = TRUE)); summary
+
+write_csv(summary, "output/environmental/daily_measurements_summary.csv")
+```
 
 
 
