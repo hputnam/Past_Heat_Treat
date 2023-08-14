@@ -1,4 +1,4 @@
-﻿date,time,number,tank,basinette ,condition,colony,Fv/Fm,Fo,Fm,PAR,ETR
+﻿date,time,number,tank,Squarical,condition,colony,Fv/Fm,Fo,Fm,PAR,ETR
 7/18/23,9:30,Jenny 1,2,3,,A,0.165,182,218,163,9.9
 7/18/23,9:30,Jenny 1,2,3,,A,0.153,188,222,162,8.9
 7/18/23,9:30,Jenny 1,2,3,,A,0.054,209,221,162,3.2
@@ -150,4 +150,3 @@
 7/21/23,9:30,Jenny 8,,1,,,0.4,63,105,389,56.8
 7/21/23,9:30,Jenny 8,,1,,,0.402,58,97,402,31.3
 7/21/23,9:30,Jenny 8,,1,,,0.456,49,90,408,67.9
-,,,,,,,,,,,
