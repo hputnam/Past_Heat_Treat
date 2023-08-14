@@ -16,18 +16,124 @@ knitr::opts_chunk$set(echo = TRUE)
 Load packages
 ```{r}
 library(tidyverse)
-library(lubridate)
-library(purrr)
+library(ggplot2)
+library(RColorBrewer)
+library(car)
+library(emmeans)
+library(multcomp)
+library(knitr)
+library(kableExtra)
+library(lme4)
+library(GGally)
+library(lmerTest)
+library(cowplot)
+library(Hmisc)
+library(ggstatsplot)
 ```
 
 First, I am going to analyze the data from the larval samples. 
 
 ## Load data 
 ```{r}
-
+pam_data <- read.csv("data/pam/jenny_larvae_measurements.csv", na.strings=c("","NA"))
+head(pam_data)
+tail(pam_data)
 ```
 
+First look at the data - I'm not sure what the number refers to. It's labeled as Jenny 1-8, but does this correspond to colony? Not sure. Additionally, not all colonies are identified (some are NAs) and not all tanks are identified. I will remove these values for now, as I have no way of knowing what tank or colony the larvae came from. I will go back through the notebook pictures to see if I can figure it out. 
 
+## Manipulate data frame 
+
+Add treatment as a column
+```{r}
+pam_data <- pam_data %>%
+  mutate(Treatment = case_when(
+    tank == "1" ~ "Ambient",
+    tank == "2" ~ "High", 
+    tank == "3" ~ "High", 
+    tank == "4" ~ "Ambient"
+  ))
+```
+
+Remove NAs from tank and colony 
+```{r}
+pam_data <- pam_data %>%
+  drop_na(tank, colony)
+```
+This got rid of 91 measurements, so we definitely need that data to make a decision about moving forward. Dropping of the NAs also got rid of the other dates, so we are now only working with 7/18/23. 
+
+## Make plots, identify outliers and do statistics 
+
+### Fv.Fm
+
+Plot Fv/Fm
+```{r}
+ggplot(pam_data, aes(x = colony, y = Fv.Fm)) +
+  geom_boxplot(aes(colour=Treatment), width=.5, outlier.shape= NA) +
+  #geom_point(aes(fill = Treatment, group = colony), pch = 21, size = 4) +
+  #geom_violin(aes(color = Treatment)) +
+  #scale_fill_manual(values=c("lightblue", "pink"))+
+  scale_colour_manual(values=c("blue", "red"))+
+  theme_bw()
+  #geom_boxplot(aes(color = Treatment)) +
+  #geom_violin()
+```
+
+Identify outliers 
+```{r}
+outlier.plot <- ggbetweenstats(pam_data, colony, Fv.Fm, outlier.tagging = T)
+outlier.plot
+
+# Don't seem to be any major outliers 
+```
+
+Do stats - run a two-way ANOVA
+```{r}
+model <- aov(Fv.Fm ~ Treatment*colony, data = pam_data)
+summary(model)
+qqPlot(residuals(model))
+leveneTest(residuals(model) ~ Treatment*colony, data = pam_data)
+```
+
+No significant differences 
+
+### Fo
+
+Plot Fo
+```{r}
+ggplot(pam_data, aes(x = colony, y = Fo)) +
+  geom_boxplot(aes(colour=Treatment), width=.5, outlier.shape= NA) +
+  #geom_point(aes(fill = Treatment, group = colony), pch = 21, size = 4) +
+  #geom_violin(aes(color = Treatment)) +
+  #scale_fill_manual(values=c("lightblue", "pink"))+
+  scale_colour_manual(values=c("blue", "red"))+
+  theme_bw()
+  #geom_boxplot(aes(color = Treatment)) +
+  #geom_violin()
+```
+
+Identify outliers 
+```{r}
+outlier.plot <- ggbetweenstats(pam_data, Treatment, Fo, outlier.tagging = T)
+outlier.plot
+
+### NEED TO REMOVE OUTLIERS 
+```
+
+Do stats - run a two-way ANOVA
+```{r}
+model <- aov(Fo ~ Treatment*colony, data = pam_data)
+summary(model)
+qqPlot(residuals(model))
+leveneTest(residuals(model) ~ Treatment*colony, data = pam_data)
+```
+There is a violation of variance assumptions. Conduct non-parametric test 
+```{r}
+kruskal.test(Fo ~ colony, data = pam_data)
+kruskal.test(Fo ~ Treatment, data = pam_data)
+
+## Need to figure out how to do this in a two-way fashion 
+```
 
 
 
