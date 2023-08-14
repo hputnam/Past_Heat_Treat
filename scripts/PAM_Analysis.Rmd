@@ -159,6 +159,27 @@ cld(emm, Letters=c(LETTERS)) #letter display
 pairs(emm)
 ```
 
+## Count observations 
+
+Calculate the number of measurements grouped by date, treatment and colony
+```{r}
+summary_data <- pam_data %>%
+  group_by(DateMeasured, Colony, Treatment) %>%
+  summarise(observations = n())
+```
+
+We may only be able to use the measurements with >3 data points per date, treatment and colony if that makes sense. 
+
+
+
+
+
+
+
+
+
+
+
 
 
 
