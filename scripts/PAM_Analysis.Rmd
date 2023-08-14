@@ -269,6 +269,17 @@ ggplot(pam_data, aes(x = colony, y = Fv.Fm, color = condition)) +
   #facet_wrap(~date)
   #geom_boxplot(aes(color = Treatment)) +
   #geom_violin()
+
+ggplot(pam_data, aes(x = condition, y = Fv.Fm)) +
+  geom_boxplot(aes(colour=condition,), width=.5, outlier.shape= NA) +
+  #geom_point(aes(fill = Treatment, group = colony), pch = 21, size = 4) +
+  #geom_violin(aes(color = Treatment)) +
+  #scale_fill_manual(values=c("lightblue", "pink"))+
+  scale_colour_manual(values=c("blue", "red"))+
+  theme_bw() 
+  #facet_wrap(~date)
+  #geom_boxplot(aes(color = Treatment)) +
+  #geom_violin()
 ```
 
 ```{r}
@@ -278,6 +289,9 @@ qqPlot(residuals(model))
 leveneTest(residuals(model) ~ condition*colony*date, data = pam_data)
 ```
 
+```{r}
+t.test(Fv.Fm ~ condition, data = pam_data)
+```
 
 
 
