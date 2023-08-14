@@ -31,7 +31,7 @@ library(Hmisc)
 library(ggstatsplot)
 ```
 
-First, I am going to analyze the data from the larval samples. 
+## First, I am going to analyze the data from the larval samples. 
 
 ## Load data 
 ```{r}
@@ -132,8 +132,155 @@ There is a violation of variance assumptions. Conduct non-parametric test
 kruskal.test(Fo ~ colony, data = pam_data)
 kruskal.test(Fo ~ Treatment, data = pam_data)
 
-## Need to figure out how to do this in a two-way fashion 
+# View post-hoc differences 
+emm = emmeans(model, ~ Treatment*colony)
+cld(emm, Letters=c(LETTERS)) #letter display
+pairs(emm)
 ```
+
+Dark level fluorescence appears to be significantly different by colony. 
+
+### Fm
+
+Plot Fm
+```{r}
+ggplot(pam_data, aes(x = colony, y = Fm)) +
+  geom_boxplot(aes(colour=Treatment), width=.5, outlier.shape= NA) +
+  #geom_point(aes(fill = Treatment, group = colony), pch = 21, size = 4) +
+  #geom_violin(aes(color = Treatment)) +
+  #scale_fill_manual(values=c("lightblue", "pink"))+
+  scale_colour_manual(values=c("blue", "red"))+
+  theme_bw()
+  #geom_boxplot(aes(color = Treatment)) +
+  #geom_violin()
+```
+
+Identify outliers 
+```{r}
+outlier.plot <- ggbetweenstats(pam_data, Treatment, Fm, outlier.tagging = T)
+outlier.plot
+
+### NEED TO REMOVE OUTLIERS 
+```
+
+Do stats - run a two-way ANOVA
+```{r}
+model <- aov(Fm ~ Treatment*colony, data = pam_data)
+summary(model)
+qqPlot(residuals(model))
+leveneTest(residuals(model) ~ Treatment*colony, data = pam_data)
+```
+
+There is a violation of variance assumptions. Conduct non-parametric test 
+```{r}
+kruskal.test(Fm ~ colony, data = pam_data)
+kruskal.test(Fm ~ Treatment, data = pam_data)
+
+# View post-hoc differences 
+emm = emmeans(model, ~ Treatment*colony)
+cld(emm, Letters=c(LETTERS)) #letter display
+pairs(emm)
+```
+
+Maximum fluorescence appears to be significantly different by colony. 
+
+
+## Now, I am going to analyze the data from the spat samples. 
+
+## Load data 
+```{r}
+pam_data <- read.csv("data/pam/pam_spat_measurements.csv", na.strings=c("","NA"))
+head(pam_data)
+tail(pam_data)
+```
+
+First look at the data - don't have info about their 'chamber' or tank id. 
+
+## Manipulate data frame 
+
+Remove space from condition and colony columns
+```{r}
+pam_data$condition <- sub(" ", "", pam_data$condition)
+pam_data$colony <- sub(" ", "", pam_data$colony)
+```
+
+Remove NAs from tank and colony 
+```{r}
+pam_data <- pam_data %>%
+  drop_na(condition, colony)
+```
+No data points removed here. 
+
+Set date
+```{r}
+pam_data$date <- as.POSIXct(pam_data$date, format = "%m/%d/%y")
+```
+
+## Make plots, identify outliers and do statistics 
+
+### Fv.Fm
+
+Plot Fv/Fm
+```{r}
+ggplot(pam_data, aes(x = colony, y = Fv.Fm, color = condition)) +
+  geom_boxplot(aes(colour=condition,), width=.5, outlier.shape= NA) +
+  #geom_point(aes(fill = Treatment, group = colony), pch = 21, size = 4) +
+  #geom_violin(aes(color = Treatment)) +
+  #scale_fill_manual(values=c("lightblue", "pink"))+
+  scale_colour_manual(values=c("blue", "red"))+
+  theme_bw() +
+  facet_wrap(~date)
+  #geom_boxplot(aes(color = Treatment)) +
+  #geom_violin()
+```
+
+NEED TO LOOK AT OUTLIERS STILL 
+
+Not sure how to do the ANOVA for this... maybe 3 way anova?? 
+Do stats - run a two-way ANOVA
+```{r}
+model <- aov(Fv.Fm ~ condition*colony*date, data = pam_data)
+summary(model)
+qqPlot(residuals(model))
+leveneTest(residuals(model) ~ condition*colony*date, data = pam_data)
+```
+
+There is a violation of variance assumptions. Conduct non-parametric test 
+```{r}
+kruskal.test(Fv.Fm ~ colony, data = pam_data)
+kruskal.test(Fv.Fm ~ condition, data = pam_data)
+kruskal.test(Fv.Fm ~ date, data = pam_data)
+
+# View post-hoc differences 
+emm = emmeans(model, ~ condition*colony*date)
+cld(emm, Letters=c(LETTERS)) #letter display
+pairs(emm)
+```
+
+What if I plotted Fv.Fm for spat without the date? 
+```{r}
+ggplot(pam_data, aes(x = colony, y = Fv.Fm, color = condition)) +
+  geom_boxplot(aes(colour=condition,), width=.5, outlier.shape= NA) +
+  #geom_point(aes(fill = Treatment, group = colony), pch = 21, size = 4) +
+  #geom_violin(aes(color = Treatment)) +
+  #scale_fill_manual(values=c("lightblue", "pink"))+
+  scale_colour_manual(values=c("blue", "red"))+
+  theme_bw() 
+  #facet_wrap(~date)
+  #geom_boxplot(aes(color = Treatment)) +
+  #geom_violin()
+```
+
+```{r}
+model <- aov(Fv.Fm ~ condition*colony, data = pam_data)
+summary(model)
+qqPlot(residuals(model))
+leveneTest(residuals(model) ~ condition*colony*date, data = pam_data)
+```
+
+
+
+
 
 
 
