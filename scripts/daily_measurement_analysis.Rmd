@@ -1,25 +1,19 @@
 ---
-title: "Analyzing larval environmental data - Hawaii 2023"
-author: "Ariana S Huffmyer"
-date: "2023"
-output: 
-  html_document:
-    code_folding: hide
-    toc: yes
-    toc_depth: 6
-    toc_float: yes
-editor_options: 
-  chunk_output_type: console
+title: "Daily measurement analysis PAST 2023"
+author: "Jill Ashey"
+date: "2023-08-14"
+output: html_document
 ---
 
-This script reads and plots environmental data from Hobo tidbit loggers and daily measurements.  
+This script reads and plots environmental data from daily measurements.  
 
-# Set Up    
+## Set up 
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
 ```
 
+Load packages
 ```{r}
 library(tidyverse)
 library(stringr)
@@ -32,66 +26,77 @@ library(broom)
 library(cowplot)
 ```
 
-# Daily measurements  
-
-## Read in file  
-
 Read in daily measurements file.  
 
 ```{r}
-daily<-read_csv("data/environmental/daily_measurements.csv")
+daily<-read_csv("data/enviromental/daily_measurements.csv")
 daily$date<-as.Date(daily$date, format="%m/%d/%y")
-daily$tank<-as.factor(daily$tank)
+daily$Squarical<-as.factor(daily$Squarical)
+daily$Basin <- as.factor(daily$Basin)
 daily$tris.date<-as.character(daily$tris.date)
+
+# remove values with NA for temp, salinity and pH
+daily <- daily %>%
+  drop_na(temp.C)
 ```
 
 ## Calculate total pH  
 
 Calculate the calibration curve from the Tris calibration and calculate pH on the total scale from pH.mV.   
 ```{r}
-pHcalib<-read_csv("data/environmental/Tris_Calibration.csv")
+pHcalib<-read_csv("data/enviromental/Tris_Calibration.csv")
 pHcalib$tris.date<-as.character(pHcalib$tris.date)
 
 pHSlope<-pHcalib %>%
   nest_by(tris.date)%>%
   mutate(fitpH = list(lm(mVTris~Ttris, data = pHcalib))) %>% # linear regression of mV and temp of the tris
   reframe(broom::tidy(fitpH)) %>% # make the output tidy
-  select(tris.date, term, estimate) %>%
+  dplyr::select(tris.date, term, estimate) %>%
   pivot_wider(names_from = term, values_from = estimate) %>%# put slope and intercept in their own column
   left_join(daily, ., by="tris.date") %>% # join with the pH sample data
   mutate(mVTris = temp.C*Ttris + `(Intercept)`) %>%# calculate the mV of the tris at temperature in which the pH of the tanks were measured
-  mutate(pH.total = pH(Ex=pH.mV, Etris=mVTris, S=sal.psu, T=temp.C)) # calculate pH of the tanks using the pH seacarb function
+  mutate(pH.total = seacarb::pH(Ex=ph.mV, Etris=mVTris, S=sal.psu, T=temp.C)) # calculate pH of the tanks using the pH seacarb function
 ```
 
 pH is now calculated as Total pH in the "pH" column. Now select the desired columns to analyze further.  
 ```{r}
 daily_calc<-pHSlope%>%
-  select(date, time, tank, group, temp.C, pH.total, pH.nbs, sal.psu, flow.mL.5s, par)
+  dplyr::select(date, time, Basin, Squarical, group, temp.C, sal.psu, par, flow.mL5s, ph.nbs, pH.total)
 ```
 
-## Calculate flow  
+## Calculate flow and par
 
 Calculate flow to total mL per minute rather than 5 sec.  
 ```{r}
 daily_calc<-daily_calc%>%
-  mutate(flow.L.min=(flow.mL.5s*12)/1000)%>%
-  select(!flow.mL.5s)
+   mutate(flow.L.min=(flow.mL5s*12)/1000)%>%
+   dplyr::select(!flow.mL5s)
+```
+
+Calculate par based on immersion correction. See Apogee manual [here](https://www.apogeeinstruments.com/underwater-par-measurements/).
+```{r}
+daily_calc<-daily_calc%>%
+   mutate(par.adj=(par*1.15)) %>%
+   dplyr::select(!par)
 ```
 
 ## Change to long format
 
 Change data format to long format 
 ```{r}
-daily_calc.long <-daily_calc %>% pivot_longer(cols=temp.C:flow.L.min,
+daily_calc.long <-daily_calc %>% pivot_longer(cols=temp.C:par.adj,
   names_to = "metric",
   values_to = "value")
 ```
 
+Filter by relevant dates if needed
+
 ## Plot metrics of interest  
 
-Plot by tank colored by symbiont treatment.      
+Plot by date colored by treatment, basin and squarical.      
 ```{r}
-daily_tanks<-daily_calc.long %>%
+## Treatment
+daily_treatment<-daily_calc.long %>%
   ggplot(aes(x=date, y=value, colour=group))+
   geom_point(size=2)+
   #geom_vline(xintercept = as.numeric(ymd("2022-10-19")), linetype="dashed", 
@@ -101,16 +106,45 @@ daily_tanks<-daily_calc.long %>%
   #scale_colour_manual(values=c("orange", "brown4"))+
   xlab("Date")+
   facet_grid(metric ~ ., scales = "free")+
-  theme_bw(); daily_tanks
+  theme_bw(); daily_treatment
   
-ggsave(filename="figures/environmental/tank_daily_measurements.png", plot=daily_tanks, dpi=300, width=6, height=8, units="in")
+ggsave(filename="output/environmental/treatment_daily_measurements.png", plot=daily_treatment, dpi=300, width=6, height=8, units="in")
 
+## Basin
+daily_basin<-daily_calc.long %>%
+  ggplot(aes(x=date, y=value, colour=Basin))+
+  geom_point(size=2)+
+  #geom_vline(xintercept = as.numeric(ymd("2022-10-19")), linetype="dashed", 
+                #color = "black", size=0.5)+
+  #geom_vline(xintercept = as.numeric(ymd("2022-10-24")), linetype="solid", 
+                #color = "black", size=0.5)+
+  #scale_colour_manual(values=c("orange", "brown4"))+
+  xlab("Date")+
+  facet_grid(metric ~ ., scales = "free")+
+  theme_bw(); daily_basin
+  
+ggsave(filename="output/environmental/basin_daily_measurements.png", plot=daily_basin, dpi=300, width=6, height=8, units="in")
+
+## Squarical
+daily_squarical<-daily_calc.long %>%
+  ggplot(aes(x=date, y=value, colour=Squarical))+
+  geom_point(size=2)+
+  #geom_vline(xintercept = as.numeric(ymd("2022-10-19")), linetype="dashed", 
+                #color = "black", size=0.5)+
+  #geom_vline(xintercept = as.numeric(ymd("2022-10-24")), linetype="solid", 
+                #color = "black", size=0.5)+
+  #scale_colour_manual(values=c("orange", "brown4"))+
+  xlab("Date")+
+  facet_grid(metric ~ ., scales = "free")+
+  theme_bw(); daily_squarical
+  
+ggsave(filename="output/environmental/squarical_daily_measurements.png", plot=daily_squarical, dpi=300, width=6, height=8, units="in")
 ```
 
 Plot by treatment summarizing tanks within each group    
 ```{r}
 daily_treatment<-daily_calc.long %>%
-  ggplot(aes(x=date, y=value, colour=group, group=interaction(group, date)))+
+  ggplot(aes(x=date, y=value, colour=group, group=interaction(Basin, date)))+
   geom_point()+
   geom_boxplot()+
   #geom_vline(xintercept = as.numeric(ymd("2022-10-19")), linetype="dashed", 
@@ -122,100 +156,13 @@ daily_treatment<-daily_calc.long %>%
   facet_grid(metric ~ ., scales = "free")+
   theme_bw(); daily_treatment
 
-ggsave(filename="figures/environmental/boxplot_daily_measurements.png", plot=daily_treatment, dpi=300, width=6, height=8, units="in")
+ggsave(filename="output/environmental/boxplot_daily_measurements.png", plot=daily_treatment, dpi=300, width=6, height=8, units="in")
 ```
 
-Plot means for each symbiont type, filtering to measurements in treatment conicals. 
-```{r}
-daily_treatment_summary<-daily_calc.long %>%
-  filter(group %in% c("Cladocopium", "Mixed", "Wildtype"))%>%
-  
-  ggplot(aes(x=group, y=value, colour=group))+
-  geom_point()+
-  geom_boxplot()+
-  scale_colour_manual(values=c("orange", "brown4", "gray"))+
-  xlab("Date")+
-  ylab("Value")+
-  facet_grid(metric ~ ., scales = "free")+
-  theme_classic(); daily_treatment_summary
 
-ggsave(filename="figures/environmental/summary_daily_measurements.png", plot=daily_treatment_summary, dpi=300, width=4, height=8, units="in")
-```
 
-## Test for differences between tanks  
 
-Obtain a short format dataset.  
-```{r}
-daily_calc.short<-daily_calc.long%>%
-  spread(metric, value)
-```
 
-Test for differences between tanks. 
 
-```{r}
-daily_calc.short%>%
-  aov(flow.L.min~tank, data=.)%>%
-  summary()
- 
-daily_calc.short%>%
-  aov(par~tank, data=.)%>%
-  summary()
 
-daily_calc.short%>%
-  aov(pH.total~tank, data=.)%>%
-  summary()
 
-daily_calc.short%>%
-  aov(pH.nbs~tank, data=.)%>%
-  summary()
-
-daily_calc.short%>%
-  aov(sal.psu~tank, data=.)%>%
-  summary()
-
-daily_calc.short%>%
-  aov(temp.C~tank, data=.)%>%
-  summary()
-```
-
-## Test for differences between treatments  
-
-```{r}
-daily_calc.short%>%
-  aov(flow.L.min~group, data=.)%>%
-  summary()
- 
-daily_calc.short%>%
-  aov(par~group, data=.)%>%
-  summary()
-
-daily_calc.short%>%
-  aov(pH.total~group, data=.)%>%
-  summary()
-
-daily_calc.short%>%
-  aov(pH.nbs~group, data=.)%>%
-  summary()
-
-daily_calc.short%>%
-  aov(sal.psu~group, data=.)%>%
-  summary()
-
-daily_calc.short%>%
-  aov(temp.C~group, data=.)%>%
-  summary()
-```
-
-## Summarize daily measurements  
-
-Calculate descriptive statistics   
-```{r}
-summary<-daily_calc.short%>%
-  group_by(group)%>%
-  select(!tank)%>%
-  select(!date)%>%
-  select(!time)%>%
-  summarise(across(everything(), list(mean = mean, sd = sd), na.rm = TRUE)); summary
-
-write_csv(summary, "output/environmental/daily_measurements_summary.csv")
-```
