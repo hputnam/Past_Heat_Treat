@@ -1,0 +1,34 @@
+---
+title: "PAM data analysis"
+author: "Jill Ashey"
+date: "2023-08-14"
+output: html_document
+---
+
+This code analyzes the pulse amplitude fluometry (PAM) data that was collected from P. asteriodes larvae and spat in Bermuda 2023. 
+
+## Set up
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Load packages
+```{r}
+library(tidyverse)
+library(lubridate)
+library(purrr)
+```
+
+First, I am going to analyze the data from the larval samples. 
+
+## Load data 
+```{r}
+
+```
+
+
+
+
+
+
