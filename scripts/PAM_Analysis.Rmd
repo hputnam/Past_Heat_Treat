@@ -177,12 +177,19 @@ We may only be able to use the measurements with >3 data points per date, treatm
 
 Group by colony and plot so that date is the x-axis, Fv/Fm is the y-axis, colors are treatment, and shapes are colony
 ```{r}
-pam_data %>%
-  group_by(Colony) %>% 
-  ggplot(., aes(x=DateMeasured, y=Fv.Fm, color = Treatment, shape = Colony)) +
+test <- pam_data %>%
+  group_by(Colony, DateMeasured, Treatment) %>%
+  summarise(mean = mean(Fv.Fm),
+            sd = sd(Fv.Fm)) %>%
+  drop_na(sd)
+
+# Plot
+ggplot(test, aes(x=DateMeasured, y=mean, color = Treatment, shape = Colony)) +
   #geom_line() +
-  geom_jitter() + 
+  #geom_boxplot() +
+  geom_point(size = 5) + 
   scale_shape_manual(values = c(0:15))+ 
+  scale_color_manual(values = c("blue", "red")) +
   theme_classic()
 ```
 
