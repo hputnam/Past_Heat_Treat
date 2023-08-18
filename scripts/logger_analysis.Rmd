@@ -100,7 +100,46 @@ Plot by treatment
 ```{r}
 plot1 <- ggplot(loggers, aes(x=Date.Time, y=temp_c, colour=Treatment))+
   geom_point()+
-  geom_vline(xintercept=as.POSIXct("0023-07-21 23:00:00"), linetype="dashed", color="black")+
+  # Cohort 1
+  geom_vline(xintercept=as.POSIXct("0023-07-10 08:50:00"), linetype="dashed", color="red", linewidth = 1)+ # Cohort 1 larvae released
+  geom_vline(xintercept=as.POSIXct("0023-07-12 14:00:00"), linetype="dotted", color="red", linewidth = 1)+ # Cohort 1 larvae sampled; plugs added
+  geom_vline(xintercept=as.POSIXct("0023-07-24 14:00:00"), linetype="dotdash", color="red", linewidth = 1)+ # Cohort 1 spat sampled; remaining spat into common garden
+  # Cohort 2
+  geom_vline(xintercept=as.POSIXct("0023-07-11 08:50:00"), linetype="dashed", color="orange", linewidth = 1)+ # Cohort 2 larvae released
+  geom_vline(xintercept=as.POSIXct("0023-07-13 14:00:00"), linetype="dotted", color="orange", linewidth = 1)+ # Cohort 2 larvae sampled; plugs added
+  geom_vline(xintercept=as.POSIXct("0023-07-25 14:00:00"), linetype="dotdash", color="orange", linewidth = 1)+ # Cohort 2 spat sampled; remaining spat into common garden
+  # Cohort 3
+  geom_vline(xintercept=as.POSIXct("0023-07-12 08:50:00"), linetype="dashed", color="yellow", linewidth = 1)+ # Cohort 3 larvae released
+  geom_vline(xintercept=as.POSIXct("0023-07-14 14:00:00"), linetype="dotted", color="yellow", linewidth = 1)+ # Cohort 3 larvae sampled; plugs added
+  geom_vline(xintercept=as.POSIXct("0023-07-26 14:00:00"), linetype="dotdash", color="yellow", linewidth = 1)+ # Cohort 3 spat sampled; remaining spat into common garden
+  # Cohort 4
+  geom_vline(xintercept=as.POSIXct("0023-07-13 08:50:00"), linetype="dashed", color="lightgreen", linewidth = 1)+ # Cohort 4 larvae released
+  geom_vline(xintercept=as.POSIXct("0023-07-15 14:00:00"), linetype="dotted", color="lightgreen", linewidth = 1)+ # Cohort 4 larvae sampled; plugs added
+  geom_vline(xintercept=as.POSIXct("0023-07-27 14:00:00"), linetype="dotdash", color="lightgreen", linewidth = 1)+ # Cohort 4 spat sampled; remaining spat into common garden
+  # Cohort 5
+  geom_vline(xintercept=as.POSIXct("0023-07-14 08:50:00"), linetype="dashed", color="lightblue", linewidth = 1)+ # Cohort 5 larvae released
+  geom_vline(xintercept=as.POSIXct("0023-07-16 14:00:00"), linetype="dotted", color="lightblue", linewidth = 1)+ # Cohort 5 larvae sampled; plugs added
+  geom_vline(xintercept=as.POSIXct("0023-07-28 14:00:00"), linetype="dotdash", color="lightblue", linewidth = 1)+ # Cohort 5 spat sampled; remaining spat into common garden
+  # Cohort 6
+  geom_vline(xintercept=as.POSIXct("0023-07-15 08:50:00"), linetype="dashed", color="darkblue", linewidth = 1)+ # Cohort 6 larvae released
+  geom_vline(xintercept=as.POSIXct("0023-07-17 14:00:00"), linetype="dotted", color="darkblue", linewidth = 1)+ # Cohort 6 larvae sampled; plugs added
+  geom_vline(xintercept=as.POSIXct("0023-07-28 15:00:00"), linetype="dotdash", color="darkblue", linewidth = 1)+ # Cohort 6 spat sampled; remaining spat into common garden. Note only 13 days of exposure in comparison to other cohorts; sampled on the same day as Cohort 5
+  # Cohort 7
+  geom_vline(xintercept=as.POSIXct("0023-07-16 08:50:00"), linetype="dashed", color="purple", linewidth = 1)+ # Cohort 7 larvae released
+  geom_vline(xintercept=as.POSIXct("0023-07-18 14:00:00"), linetype="dotted", color="purple", linewidth = 1)+ # Cohort 7 larvae sampled; plugs added
+  geom_vline(xintercept=as.POSIXct("0023-07-30 14:00:00"), linetype="dotdash", color="purple", linewidth = 1)+ # Cohort 7 spat sampled; remaining spat into common garden
+  # Cohort 8
+  geom_vline(xintercept=as.POSIXct("0023-07-17 08:50:00"), linetype="dashed", color="pink", linewidth = 1)+ # Cohort 8 larvae released
+  geom_vline(xintercept=as.POSIXct("0023-07-19 14:00:00"), linetype="dotted", color="pink", linewidth = 1)+ # Cohort 8 larvae sampled; plugs added
+  geom_vline(xintercept=as.POSIXct("0023-07-31 14:00:00"), linetype="dotdash", color="pink", linewidth = 1)+ # Cohort 8 spat sampled; remaining spat into common garden
+  # Cohort 9
+  geom_vline(xintercept=as.POSIXct("0023-07-18 08:50:00"), linetype="dashed", color="brown", linewidth = 1)+ # Cohort 9 larvae released
+  geom_vline(xintercept=as.POSIXct("0023-07-20 14:00:00"), linetype="dotted", color="brown", linewidth = 1)+ # Cohort 9 larvae sampled; plugs added
+  geom_vline(xintercept=as.POSIXct("0023-08-01 14:00:00"), linetype="dotdash", color="brown", linewidth = 1)+ # Cohort 9 spat sampled; remaining spat into common garden
+  # Cohort 10
+  geom_vline(xintercept=as.POSIXct("0023-07-19 08:50:00"), linetype="dashed", color="black", linewidth = 1)+ # Cohort 10 larvae released
+  geom_vline(xintercept=as.POSIXct("0023-07-21 14:00:00"), linetype="dotted", color="black", linewidth = 1)+ # Cohort 10 larvae sampled; plugs added
+  geom_vline(xintercept=as.POSIXct("0023-08-02 14:00:00"), linetype="dotdash", color="black", linewidth = 1)+ # Cohort 10 spat sampled; remaining spat into common garden
   #ylim(26, 30)+
   scale_colour_manual(values=c("blue", "red"), name="Temperature")+
   ylab("Temperature (°C)")+
@@ -114,6 +153,46 @@ Plot by logger location
 ```{r}
 plot2 <- ggplot(loggers, aes(x=Date.Time, y=temp_c, colour=LoggerID))+
   geom_point()+
+  # Cohort 1
+  geom_vline(xintercept=as.POSIXct("0023-07-10 08:50:00"), linetype="dashed", color="red", linewidth = 1)+ # Cohort 1 larvae released
+  geom_vline(xintercept=as.POSIXct("0023-07-12 14:00:00"), linetype="dotted", color="red", linewidth = 1)+ # Cohort 1 larvae sampled; plugs added
+  geom_vline(xintercept=as.POSIXct("0023-07-24 14:00:00"), linetype="dotdash", color="red", linewidth = 1)+ # Cohort 1 spat sampled; remaining spat into common garden
+  # Cohort 2
+  geom_vline(xintercept=as.POSIXct("0023-07-11 08:50:00"), linetype="dashed", color="orange", linewidth = 1)+ # Cohort 2 larvae released
+  geom_vline(xintercept=as.POSIXct("0023-07-13 14:00:00"), linetype="dotted", color="orange", linewidth = 1)+ # Cohort 2 larvae sampled; plugs added
+  geom_vline(xintercept=as.POSIXct("0023-07-25 14:00:00"), linetype="dotdash", color="orange", linewidth = 1)+ # Cohort 2 spat sampled; remaining spat into common garden
+  # Cohort 3
+  geom_vline(xintercept=as.POSIXct("0023-07-12 08:50:00"), linetype="dashed", color="yellow", linewidth = 1)+ # Cohort 3 larvae released
+  geom_vline(xintercept=as.POSIXct("0023-07-14 14:00:00"), linetype="dotted", color="yellow", linewidth = 1)+ # Cohort 3 larvae sampled; plugs added
+  geom_vline(xintercept=as.POSIXct("0023-07-26 14:00:00"), linetype="dotdash", color="yellow", linewidth = 1)+ # Cohort 3 spat sampled; remaining spat into common garden
+  # Cohort 4
+  geom_vline(xintercept=as.POSIXct("0023-07-13 08:50:00"), linetype="dashed", color="lightgreen", linewidth = 1)+ # Cohort 4 larvae released
+  geom_vline(xintercept=as.POSIXct("0023-07-15 14:00:00"), linetype="dotted", color="lightgreen", linewidth = 1)+ # Cohort 4 larvae sampled; plugs added
+  geom_vline(xintercept=as.POSIXct("0023-07-27 14:00:00"), linetype="dotdash", color="lightgreen", linewidth = 1)+ # Cohort 4 spat sampled; remaining spat into common garden
+  # Cohort 5
+  geom_vline(xintercept=as.POSIXct("0023-07-14 08:50:00"), linetype="dashed", color="lightblue", linewidth = 1)+ # Cohort 5 larvae released
+  geom_vline(xintercept=as.POSIXct("0023-07-16 14:00:00"), linetype="dotted", color="lightblue", linewidth = 1)+ # Cohort 5 larvae sampled; plugs added
+  geom_vline(xintercept=as.POSIXct("0023-07-28 14:00:00"), linetype="dotdash", color="lightblue", linewidth = 1)+ # Cohort 5 spat sampled; remaining spat into common garden
+  # Cohort 6
+  geom_vline(xintercept=as.POSIXct("0023-07-15 08:50:00"), linetype="dashed", color="darkblue", linewidth = 1)+ # Cohort 6 larvae released
+  geom_vline(xintercept=as.POSIXct("0023-07-17 14:00:00"), linetype="dotted", color="darkblue", linewidth = 1)+ # Cohort 6 larvae sampled; plugs added
+  geom_vline(xintercept=as.POSIXct("0023-07-28 15:00:00"), linetype="dotdash", color="darkblue", linewidth = 1)+ # Cohort 6 spat sampled; remaining spat into common garden. Note only 13 days of exposure in comparison to other cohorts; sampled on the same day as Cohort 5
+  # Cohort 7
+  geom_vline(xintercept=as.POSIXct("0023-07-16 08:50:00"), linetype="dashed", color="purple", linewidth = 1)+ # Cohort 7 larvae released
+  geom_vline(xintercept=as.POSIXct("0023-07-18 14:00:00"), linetype="dotted", color="purple", linewidth = 1)+ # Cohort 7 larvae sampled; plugs added
+  geom_vline(xintercept=as.POSIXct("0023-07-30 14:00:00"), linetype="dotdash", color="purple", linewidth = 1)+ # Cohort 7 spat sampled; remaining spat into common garden
+  # Cohort 8
+  geom_vline(xintercept=as.POSIXct("0023-07-17 08:50:00"), linetype="dashed", color="pink", linewidth = 1)+ # Cohort 8 larvae released
+  geom_vline(xintercept=as.POSIXct("0023-07-19 14:00:00"), linetype="dotted", color="pink", linewidth = 1)+ # Cohort 8 larvae sampled; plugs added
+  geom_vline(xintercept=as.POSIXct("0023-07-31 14:00:00"), linetype="dotdash", color="pink", linewidth = 1)+ # Cohort 8 spat sampled; remaining spat into common garden
+  # Cohort 9
+  geom_vline(xintercept=as.POSIXct("0023-07-18 08:50:00"), linetype="dashed", color="brown", linewidth = 1)+ # Cohort 9 larvae released
+  geom_vline(xintercept=as.POSIXct("0023-07-20 14:00:00"), linetype="dotted", color="brown", linewidth = 1)+ # Cohort 9 larvae sampled; plugs added
+  geom_vline(xintercept=as.POSIXct("0023-08-01 14:00:00"), linetype="dotdash", color="brown", linewidth = 1)+ # Cohort 9 spat sampled; remaining spat into common garden
+  # Cohort 10
+  geom_vline(xintercept=as.POSIXct("0023-07-19 08:50:00"), linetype="dashed", color="black", linewidth = 1)+ # Cohort 10 larvae released
+  geom_vline(xintercept=as.POSIXct("0023-07-21 14:00:00"), linetype="dotted", color="black", linewidth = 1)+ # Cohort 10 larvae sampled; plugs added
+  geom_vline(xintercept=as.POSIXct("0023-08-02 14:00:00"), linetype="dotdash", color="black", linewidth = 1)+ # Cohort 10 spat sampled; remaining spat into common garden
   #ylim(26, 30)+
   #scale_colour_manual(values=c("blue", "red"), name="Temperature")+
   ylab("Temperature (°C)")+
@@ -123,5 +202,4 @@ plot2 <- ggplot(loggers, aes(x=Date.Time, y=temp_c, colour=LoggerID))+
 ggsave(filename="output/environmental/logger_by_ID.png", plot=plot2, dpi=300, width=9, height=6, units="in")
 ```
 
-Add vertical lines to plot so we know when sampling occurred. Line type will be release, larval sampling, spat sampling, etc. Line color will be cohort (ie which date did colonies release on)
-
+The vertical lines denoting the sampling info are pretty messy. Need to add a legend for the line colors and types. 
