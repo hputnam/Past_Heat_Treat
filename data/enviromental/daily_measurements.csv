@@ -205,3 +205,7 @@ date,time,Type,group,ph.mV,ph.nbs,temp.C,sal.psu,par,flow.mL5s,tris.date,Notes
 7/27/23,14:25,Basin 6,Heated,-74.9,8.29,30.2,36.57,,,20230710,Common Garden
 8/10/23,15:30,Basin 5,Ambient,-65.5,8.13,28.1,36.22,103,,20230710,Common Garden
 8/10/23,15:30,Basin 6,Ambient,-67.9,8.17,28.4,36.23,123,,20230710,Common Garden
+8/11/23,13:10,Basin 5,Ambient,-62.8,8.08,28,36.26,273,,20230710,Common Garden
+8/11/23,13:10,Basin 6,Ambient,-66.93,8.14,28.3,36.28,412,,20230710,Common Garden
+8/18/23,13:30,Basin 5,Ambient,-72.4,8.23,29,36.65,,,20230710,Common Garden
+8/18/23,13:30,Basin 6,Ambient,-70.1,8.2,29.4,38.1,,,20230710,Common Garden
