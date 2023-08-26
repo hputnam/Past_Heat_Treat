@@ -216,6 +216,7 @@ Date,Sample_ID,Chamber_ID,Colony,Treatment,Temperature,Type,Salinity,Run,Volume,
 20230721,202,B6,P,Ambient,28,Sample,36.5,20,0.00008,10
 20230721,206,C1,P,Ambient,28,Sample,36.5,20,0.00008,10
 20230721,205,C2,O,Ambient,28,Sample,36.5,20,0.00008,10
+20230721,NA,C3,NA,Ambient,28,Blank,36.5,20,00008,NA
 20230721,201,B1,Pooled,Heated,30,Sample,36.5,21,0.00008,10
 20230721,208,B2,O,Heated,30,Sample,36.5,21,0.00008,10
 20230721,213,B3,P,Heated,30,Sample,36.5,21,0.00008,10
