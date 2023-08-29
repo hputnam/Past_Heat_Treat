@@ -1,0 +1,239 @@
+---
+title: "Larval Photosynthesis Rates Extraction with LoLinR - Bermuda 2023 ENCORE"
+author: "AS Huffmyer"
+output: html_document
+editor_options:
+  chunk_output_type: console
+date: "2023-08-28"
+---
+
+Need to QC individual export plots 
+
+This script is extracting photosynthesis rates at 410 PAR under ambient and heat conditions for P. asteroides larvae in Bermuda. The code is based on A. Huffmyer's TPC [script](https://github.com/AHuffmyer/larval_symbiont_TPC/blob/main/scripts/F1F2_sdr_extraction.Rmd).
+
+
+## Setup  
+
+Set up workspace, set options, and load required packages.
+```{r}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE,message = FALSE)
+```
+
+```{r {r, warning=FALSE, message=FALSE}
+## install packages if you dont already have them in your library
+if ("devtools" %in% rownames(installed.packages()) == 'FALSE') install.packages('devtools') 
+library(devtools)
+if ("segmented" %in% rownames(installed.packages()) == 'FALSE') install.packages('segmented') 
+if ("plotrix" %in% rownames(installed.packages()) == 'FALSE') install.packages('plotrix') 
+if ("gridExtra" %in% rownames(installed.packages()) == 'FALSE') install.packages('gridExtra') 
+if ("LoLinR" %in% rownames(installed.packages()) == 'FALSE') install_github('colin-olito/LoLinR') 
+if ("lubridate" %in% rownames(installed.packages()) == 'FALSE') install.packages('lubridate') 
+if ("chron" %in% rownames(installed.packages()) == 'FALSE') install.packages('chron') 
+if ("plyr" %in% rownames(installed.packages()) == 'FALSE') install.packages('plyr') 
+if ("dplyr" %in% rownames(installed.packages()) == 'FALSE') install.packages('dplyr') 
+if ("stringr" %in% rownames(installed.packages()) == 'FALSE') install.packages('stringr') 
+if ("Rmisc" %in% rownames(installed.packages()) == 'FALSE') install.packages('Rmisc') 
+if ("respR" %in% rownames(installed.packages()) == 'FALSE') install.packages('respR') 
+
+
+#load packages
+library("ggplot2")
+library("segmented")
+library("plotrix")
+library("gridExtra")
+library("LoLinR")
+library("lubridate")
+library("chron")
+library('plyr')
+library('dplyr')
+library('stringr')
+library('Rmisc')
+library('respR')
+library('tidyverse')
+
+```
+
+## Read in files
+
+Set the path of all respirometry files within the R project
+
+```{r, warning=FALSE, message=FALSE}
+path.p<-"data/pr_sdr/runP" #location of file
+```
+
+Bring in file names
+```{r, warning=FALSE, message=FALSE}
+# bring in the respiration file names
+file.names<-basename(list.files(path = path.p, pattern = "csv", recursive = TRUE))
+```
+
+Bring in metadata
+```{r}
+run_metadata<-read.csv("data/pr_sdr/P_SDR_Run_Info.csv")
+```
+
+## Extract photosynthesis rates  
+
+Generate photosynthesis data frames.
+```{r, warning=FALSE, message=FALSE}
+#generate a 6 column dataframe with specific column names
+#photosynthesis
+Photo.R <- data.frame(matrix(NA, ncol=7))
+colnames(Photo.R) <- c("Date","Sample.ID","Run","Chamber.ID","Light", "Intercept", "umol.L.min")
+
+Photo.Rb <- data.frame(matrix(NA, ncol=7))
+colnames(Photo.Rb) <- c("Date","Sample.ID","Run","Chamber.ID","Light","Intercept",
+                        "umol.L.min")
+
+```
+
+Load in the sample information file. It is important to have chambers in the order "A1, B1, C1, D1", rather than "A1, A2, A3, A4".  
+
+Read in sample and run information and merge into a master metadata file. 
+```{r}
+# Load sample metadata (i.e., which larvae were in which runs)
+Sample_Info <- read.csv(file = "data/pr_sdr/P_SDR_Sample_Info.csv")
+
+# notes don't exist in sample..info select(!Notes)
+samp <- Sample_Info$Sample_ID
+run <- as.numeric(str_sub(file.names, 13, 14))
+date <- str_sub(file.names,1, str_length(file.names)-11)#grab date from file name
+rename <- Sample_Info$Chamber_ID
+
+
+# Load run metadata (i.e., light levels and interval times for each run)
+Run_Info <- read.csv(file = "data/pr_sdr/P_SDR_Run_Info.csv")
+Run_Info<- Run_Info[-12,]
+Light_Values <- unique(Run_Info$Light_Level)
+
+# Join all coral and run metadata joining by date, temp and run
+metadata <- full_join(Sample_Info, Run_Info) %>%
+  mutate(Date = as_date(as.character(Date), format = "%Y%m%d"))
+
+#starttime<-Run_Info$IntervalStart
+#endtime<-Run_Info$IntervalStop
+
+```
+
+```{r}
+run
+Light_Values
+#starttime
+#endtime
+date
+```
+
+Run loop to extract slopes from photosynthesis data from each light level in each file name. 
+```{r, results=FALSE, warning=FALSE, message=FALSE}
+
+for(file in 1:length(file.names))  { # for every file in list start at the first and run this following function
+  
+for(i in Light_Values) { #in every file, for each light value 
+
+  Photo.Data <-read.table(file.path(path.p,file.names[file]),skip = 56, header=T, sep=",", na.string="NA", fill = TRUE, as.is=TRUE, fileEncoding="latin1") #reads in the data files
+  Photo.Data$Temp <- Photo.Data[,17] #assigns temp column
+#Photo.Data$Time.Min <- seq.int(from=0, to=((nrow(Photo.Data)*0.25)-0.25), by = 0.25) #set time in min
+Photo.Data <- Photo.Data[,-c(16,21)] #remove unused columns  
+  # extract start and end times for the respective plate 
+  
+  starttime<-Run_Info%>%
+    select(Light_Level, IntervalStart)%>%
+    filter(Light_Level==i)%>%
+    select(IntervalStart)%>%
+    as.data.frame()
+
+   starttime<-starttime[1,1]
+   
+   
+   endtime<-Run_Info%>%
+    select(Light_Level, IntervalStop)%>%
+    filter(Light_Level==i)%>%
+    select(IntervalStop)%>%
+    as.data.frame()
+
+   endtime<-endtime[1,1]
+   
+  #filter by light interval 
+  Photo.Data <- Photo.Data %>% #filters data by interval for light 
+     filter(Time.Min. > starttime)%>%
+     filter(Time.Min. < endtime) 
+
+  Photo.Data.N <- Photo.Data[,3:15] #subset desired columns
+  
+  #add column names back in 
+  Photo.Data.N<-as.data.frame(Photo.Data.N)
+  
+  for(j in 1:(ncol(Photo.Data.N))){
+    model <- rankLocReg(
+      xall=Photo.Data$Time.Min., yall=as.numeric(Photo.Data.N[, j]), 
+      alpha=0.4, method="pc", verbose=TRUE) #extract slopes, percentile rank method with minimum window size of 0.4. This means that in order to fit a slope, it has to encompass at least 40% of available datapoints. 
+    
+  pdf(paste0("data/pr_sdr/PhotosynthesisPlots/", date[i], "_Plate",run[file], "_", rename[j], "_light", Light_Values[i], "_regression.pdf")) #Your code for generating the plot goes here
+
+  #par("mar")
+  #par(mar = c(.1, .1, .1, .1))#plot margin are to big, had to be reset
+  plot(model)
+  dev.off()
+    
+    Photo.Rb[j,1] <- as.character(date[file]) #stores the date
+    Photo.Rb[j,2] <- as.character(run[file]) #stores the run number
+    Photo.Rb[j,3] <- as.character(samp[j+(i-1)*ncol(Photo.Data.N)]) #stores the sample ID
+    Photo.Rb[j,4] <- as.character(rename[j]) #stores the chamber ID
+    Photo.Rb[j,5] <- as.character(i) #stores the chamber ID
+    Photo.Rb[j,6:7] <- model$allRegs[i,c(4,5)] #inserts slope and intercept in the dataframe
+    
+  }
+  
+  Photo.R <- rbind(Photo.R, Photo.Rb) #bind final data frame
+  }
+  
+}
+```
+Calculate average temperature of each run and export to a table to confirm temperatures are not different between PAR values.    
+
+```{r}
+
+#list files 
+file.names<-basename(list.files(path = path.p, pattern = "csv", recursive = TRUE)) 
+
+#generate matrix to populate
+Temp.P <- data.frame(matrix(NA, ncol=3))
+colnames(Temp.P) <- c("Date","Temp.C", "Light")
+
+Temp.Pb <- data.frame(matrix(NA, ncol=3))
+colnames(Temp.Pb) <- c("Date","Temp.C","Light")
+
+#read in temps and generate mean values for each step of the light curve 
+
+for(file in 1:length(file.names)){ 
+  
+  for(i in Light_Values) {# for every file in list start at the first and run this following function
+  
+    Temp.Data <-read.table(file.path(path.p,file.names[file]), skip = 56, header=T, sep=",", na.string="NA", fill = TRUE, as.is=TRUE, fileEncoding="latin1") #reads in the data files
+  Temp.Data$Temp <- Temp.Data[,21] #assigns temp column
+  Temp.Data$Time.Min <- seq.int(from=0, to=((nrow(Temp.Data)*0.25)-0.25), by = 0.25) #set time in min
+  
+  #filter by light interval - need to bind in dataframe to tell it which start and end time to use 
+  Temp.Data <- Temp.Data %>% #filters data by interval for light 
+     filter(Time.Min > starttime[i])%>%
+     filter(Time.Min < endtime[i]) 
+  
+    Temp.Pb[j,1] <- as.character(date[file]) #stores the date
+    Temp.Pb[j,3] <- mean(Temp.Data$Temp) #stores the sample ID
+    Temp.Pb[j,4] <- mean(Light_Values[i]) #stores the sample ID
+    
+    
+    Temp.P <- rbind(Temp.P, Temp.Pb) #bind final data frame
+    Temp.P <- na.omit(Temp.P)
+    if (ncol(Temp.P) == ncol(Temp.Pb))
+  Temp.P <- rbind(Temp.P, Temp.Pb)
+  
+}
+
+}
+write.csv(Temp.P, paste0("output/pr_sdr/runs_temp.csv")) #save respiration rate data
+plot(Photo.R$umol.L.min~as.factor(Photo.R$date)*as.factor(Photo.R$Light), side = 2, las = 2, xlab="" )
+
+```
+
+```{r}
