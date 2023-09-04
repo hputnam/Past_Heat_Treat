@@ -10,11 +10,26 @@ This code analyzes the pulse amplitude fluometry (PAM) data that was collected f
 ## Set up
 
 ```{r setup, include=FALSE}
+if ("knitr" %in% rownames(installed.packages()) == 'FALSE') install.packages('knitr') 
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
 Load packages
 ```{r}
+if ("tidyverse" %in% rownames(installed.packages()) == 'FALSE') install.packages('tidyverse') 
+if ("ggplot2" %in% rownames(installed.packages()) == 'FALSE') install.packages('ggplot2') 
+if ("RColorBrewer" %in% rownames(installed.packages()) == 'FALSE') install.packages('RColorBrewer') 
+if ("car" %in% rownames(installed.packages()) == 'FALSE') install.packages('car') 
+if ("emmeans" %in% rownames(installed.packages()) == 'FALSE') install.packages('emmeans') 
+if ("multcomp" %in% rownames(installed.packages()) == 'FALSE') install.packages('multcomp') 
+if ("knitr" %in% rownames(installed.packages()) == 'FALSE') install.packages('knitr') 
+if ("kableExtra" %in% rownames(installed.packages()) == 'FALSE') install.packages('kableExtra') 
+if ("GGally" %in% rownames(installed.packages()) == 'FALSE') install.packages('GGally') 
+if ("lmerTest" %in% rownames(installed.packages()) == 'FALSE') install.packages('lmerTest') 
+if ("cowplot" %in% rownames(installed.packages()) == 'FALSE') install.packages('cowplot') 
+if ("Hmisc" %in% rownames(installed.packages()) == 'FALSE') install.packages('Hmisc') 
+if ("ggstatsplot" %in% rownames(installed.packages()) == 'FALSE') install.packages('ggstatsplot') 
+
 library(tidyverse)
 library(ggplot2)
 library(RColorBrewer)
@@ -35,7 +50,7 @@ library(ggstatsplot)
 
 ## Load data 
 ```{r}
-pam_data <- read.csv("data/pam/pam_larvae_dark.csv", na.strings=c("","NA"))
+pam_data <- read_csv("../data/pam/pam_larvae_dark.csv")
 head(pam_data)
 tail(pam_data)
 ```
