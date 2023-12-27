@@ -58,7 +58,7 @@ library('tidyverse')
 Set the path of all respirometry files within the R project
 
 ```{r, warning=FALSE, message=FALSE}
-path.p<-"data/pr_sdr/runP" #location of file
+path.p<-"data/pr_sdr/runP/test" #location of file
 ```
 
 Bring in file names
@@ -165,7 +165,7 @@ for (i in Light_Values) { #in every file, for each light value
       xall=Photo.Data$Time.Min, yall=as.numeric(Photo.Data.N[, j]), 
       alpha=0.4, method="pc", verbose=TRUE) #extract slopes, percentile rank method with minimum window size of 0.4. This means that in order to fit a slope, it has to encompass at least 40% of available datapoints. 
     
-    pdf(paste0("data/pr_sdr/PhotosynthesisPlots2/",date[i],"_Run",run[file], "_", rename[j],"_light", Light_Values[i],"_regression.pdf")) #generate output file names
+    pdf(paste0("data/pr_sdr/P_Plots/",date[i],"_Run",run[file], "_", rename[j],"_light", Light_Values[i],"_regression.pdf")) #generate output file names
     plot(model)
     dev.off()
     
