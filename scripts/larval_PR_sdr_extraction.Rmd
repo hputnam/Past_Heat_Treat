@@ -62,7 +62,7 @@ library('tidyverse')
 Set the path of all respirometry files within the R project.   
 
 ```{r, warning=FALSE, message=FALSE}
-path.p<-"data/pr_sdr/runP" #location of files
+path.p<-"data/pr_sdr/runP/test" #location of files
 ```
 
 Bring in the file names.
@@ -130,7 +130,7 @@ Run loop to extract slopes from photosynthesis data from each light level in eac
 
 for(file in 1:length(file.names)) { # for every file in list start at the first and run this following function
   
-  for (i in Light_Values) { #in every file, for each light value 
+  #for (i in Light_Values) { #in every file, for each light value 
     
   Photo.Data <-read.table(file.path(path.p,file.names[file]), skip = 56, header=T, sep=",", na.string="NA", fill = TRUE, as.is=TRUE, fileEncoding="latin1") #reads in the data files
   Photo.Data$Temp <- Photo.Data[,20] #assigns temp column
@@ -140,7 +140,7 @@ for(file in 1:length(file.names)) { # for every file in list start at the first 
   starttime<-Run.Info%>%
     select(Plate, Light_Level, IntervalStart)%>%
     filter(Plate==plate[file])%>%
-    filter(Light_Level==i)%>%
+    #filter(Light_Level==i)%>%
     select(IntervalStart)%>%
     as.data.frame()
 
@@ -149,16 +149,16 @@ for(file in 1:length(file.names)) { # for every file in list start at the first 
    endtime<-Run.Info%>%
     select(Plate, Light_Level, IntervalStop)%>%
     filter(Plate==plate[file])%>%
-    filter(Light_Level==i)%>%
+    #filter(Light_Level==i)%>%
     select(IntervalStop)%>%
     as.data.frame()
 
    endtime<-endtime[1,1]
    
   #filter by light interval - need to bind in dataframe to tell it which start and end time to use 
-  Photo.Data <- Photo.Data %>% #filters data by interval for light 
-     filter(Time.Min > starttime)%>%
-     filter(Time.Min < endtime) 
+  #Photo.Data <- Photo.Data %>% #filters data by interval for light 
+     #filter(Time.Min > starttime)%>%
+     #filter(Time.Min < endtime) 
   
   Photo.Data.N <- Photo.Data[,3:15] #subset desired columns
   
@@ -170,7 +170,7 @@ for(file in 1:length(file.names)) { # for every file in list start at the first 
       xall=Photo.Data$Time.Min, yall=as.numeric(Photo.Data.N[, j]), 
       alpha=0.4, method="pc", verbose=TRUE) #extract slopes, percentile rank method with minimum window size of 0.4. This means that in order to fit a slope, it has to encompass at least 40% of available datapoints. 
     
-    pdf(paste0("output/P_regressions/",date[file], "_Plate",plate[file],"_",rename[j],"_light", Light_Values[i],"_regression_trunc.pdf")) #generate output file names
+    pdf(paste0("output/P_regressions/",date[file], "_Plate",plate[file],"_",rename[j],"_light", Light_Values,"_regression_trunc.pdf")) #generate output file names
     plot(model)
     dev.off()
     
@@ -179,13 +179,13 @@ for(file in 1:length(file.names)) { # for every file in list start at the first 
     #Photo.Rb[j,3] <- as.character(samp[j+(i-1)*ncol(Photo.Data.N)]) #stores the sample ID
     Photo.Rb[j,3] <- as.character(samp[j])
     Photo.Rb[j,4] <- as.character(rename[j]) #stores the chamber ID
-    Photo.Rb[j,5] <- as.character(i) #stores the chamber ID
-    Photo.Rb[j,6:7] <- model$allRegs[i,c(4,5)] #inserts slope and intercept in the dataframe
+    Photo.Rb[j,5] <- as.character(1) #stores the chamber ID
+    Photo.Rb[j,6:7] <- model$allRegs[1,c(4,5)] #inserts slope and intercept in the dataframe
     
   }
   
   Photo.R <- rbind(Photo.R, Photo.Rb) #bind final data frame
-  }
+ # }
   
 }
 
