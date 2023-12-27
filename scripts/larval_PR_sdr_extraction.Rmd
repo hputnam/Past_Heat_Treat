@@ -178,9 +178,9 @@ for(file in 1:length(file.names)) { # for every file in list start at the first 
     Photo.Rb[j,2] <- as.character(plate[file]) #stores the run number
     #Photo.Rb[j,3] <- as.character(samp[j+(i-1)*ncol(Photo.Data.N)]) #stores the sample ID
     #Photo.Rb[j,3] <- as.character(samp[j])
-    Photo.Rb[j,4] <- as.character(rename[j]) #stores the chamber ID
-    Photo.Rb[j,5] <- as.character(1) #stores the chamber ID
-    Photo.Rb[j,6:7] <- model$allRegs[1,c(4,5)] #inserts slope and intercept in the dataframe
+    Photo.Rb[j,3] <- as.character(rename[j]) #stores the chamber ID
+    Photo.Rb[j,4] <- as.character(1) #stores the chamber ID
+    Photo.Rb[j,5:6] <- model$allRegs[1,c(4,5)] #inserts slope and intercept in the dataframe
     
   }
   
@@ -257,16 +257,3 @@ for(file in 1:length(file.names)) {
 }
 write.csv(Temp.P, paste0("output/photo_sdr_runs_temp.csv")) #save respiration rate data
 ```
-
-Save photosynthesis data frames.  
-
-```{r, results=FALSE, warning=FALSE, message=FALSE}
-
-
-
-```
-
-
-
-
-
