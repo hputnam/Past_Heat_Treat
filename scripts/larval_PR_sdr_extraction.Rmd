@@ -83,11 +83,11 @@ Generate photosynthesis data frames.
 ```{r, warning=FALSE, message=FALSE}
 #generate a 7 column dataframe with specific column names
 #photosynthesis
-Photo.R <- data.frame(matrix(NA, ncol=7))
-colnames(Photo.R) <- c("Date", "Plate","Sample.ID","Chamber.ID","Light", "Intercept", "umol.L.min")
+Photo.R <- data.frame(matrix(NA, ncol=6))
+colnames(Photo.R) <- c("Date", "Plate","Chamber.ID","Light", "Intercept", "umol.L.min")
 
-Photo.Rb <- data.frame(matrix(NA, ncol=7))
-colnames(Photo.Rb) <- c("Date", "Plate","Sample.ID","Chamber.ID","Light", "Intercept", "umol.L.min")
+Photo.Rb <- data.frame(matrix(NA, ncol=6))
+colnames(Photo.Rb) <- c("Date", "Plate","Chamber.ID","Light", "Intercept", "umol.L.min")
 
 ```
 
@@ -177,7 +177,7 @@ for(file in 1:length(file.names)) { # for every file in list start at the first 
     Photo.Rb[j,1] <- as.character(date[file]) #stores the date
     Photo.Rb[j,2] <- as.character(plate[file]) #stores the run number
     #Photo.Rb[j,3] <- as.character(samp[j+(i-1)*ncol(Photo.Data.N)]) #stores the sample ID
-    Photo.Rb[j,3] <- as.character(samp[j])
+    #Photo.Rb[j,3] <- as.character(samp[j])
     Photo.Rb[j,4] <- as.character(rename[j]) #stores the chamber ID
     Photo.Rb[j,5] <- as.character(1) #stores the chamber ID
     Photo.Rb[j,6:7] <- model$allRegs[1,c(4,5)] #inserts slope and intercept in the dataframe
