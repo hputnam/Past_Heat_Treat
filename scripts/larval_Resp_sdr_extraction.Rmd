@@ -1,5 +1,5 @@
 ---
-title: "Larval Photosynthesis Rates Extraction with LoLinR - Moorea Pocillopora 2023 - PR Measurements"
+title: "Larval Photosynthesis Rates Extraction with LoLinR - Bermuda Porites larvae 2023 - PR Measurements"
 author: "AS Huffmyer Hollie Putnam"
 date: '2023'
 output:
@@ -198,7 +198,6 @@ write.csv(Resp.R, paste0("output/resp_sdr_rates_raw.csv")) #save respiration rat
 
 ```
 
-Need to finalize this script
 Calculate average temperature of each run and export to a table to confirm temperatures are not different between PAR values.    
 ```{r}
 # list files 
@@ -213,27 +212,22 @@ colnames(Temp.Rb) <- c("Date", "Plate","Temp.C", "Assay")
 
 #read in temps and generate mean values for each file  
 for(file in 1:length(file.names)) { 
-  
-  #for(i in Light_Values) {# for every file in list start at the first and run this following function
-  
-    Temp.Data <-read.table(file.path(path.p,file.names[file]), skip = 56, header=T, sep=",", na.string="NA", fill = TRUE, as.is=TRUE, fileEncoding="latin1") #reads in the data files
-  Temp.Data$Temp <- mean(Temp.Data[,30]) #assigns temp column
 
   
-    Temp.Rb[j,1] <- as.character(date[file]) #stores the date
-    Temp.Rb[j,2] <- as.character(plate[file]) #stores the run number
-    Temp.Rb[j,3] <- Temp.Data$Temp[1] #stores the sample ID
-    Temp.Rb[j,4] <- "Resp" #stores the assay name
+    Temp.Data <-read.table(file.path(path.p,file.names[file]), skip = 56, header=T, sep=",", na.string="NA", fill = TRUE, as.is=TRUE, fileEncoding="latin1") #reads in the data files
+  Temp.Data$Temp <- round(mean(Temp.Data[,30]),2) #assigns temp column
+
+  
+    Temp.Rb[file,1] <- as.character(date[file]) #stores the date
+    Temp.Rb[file,2] <- as.character(plate[file]) #stores the run number
+    Temp.Rb[file,3] <- Temp.Data$Temp[1] #stores the sample ID
+    Temp.Rb[file,4] <- "Resp" #stores the assay name
     
-    
-    Temp.R <- rbind(Temp.R, Temp.Rb) #bind final data frame
-    #Temp.R <- na.omit(Temp.R)
   
 #}
 
 }
 
-Temp.R <- na.omit(Temp.R)
 
-write.csv(Temp.R, paste0("output/resp_sdr_runs_temp.csv")) #save respiration rate data
+write.csv(Temp.Rb, paste0("output/resp_sdr_runs_temp.csv")) #save respiration rate data
 ```
