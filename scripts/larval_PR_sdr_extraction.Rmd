@@ -133,7 +133,7 @@ for(file in 1:length(file.names)) { # for every file in list start at the first 
   #for (i in Light_Values) { #in every file, for each light value 
     
   Photo.Data <-read.table(file.path(path.p,file.names[file]), skip = 56, header=T, sep=",", na.string="NA", fill = TRUE, as.is=TRUE, fileEncoding="latin1") #reads in the data files
-  Photo.Data$Temp <- Photo.Data[,20] #assigns temp column
+  Photo.Data$Temp <- Photo.Data[,30] #assigns temp column
   Photo.Data$Time.Min <- seq.int(from=0, to=((nrow(Photo.Data)*0.25)-0.25), by = 0.25) #set time in min
   
   #extract start and end times 
@@ -160,7 +160,7 @@ for(file in 1:length(file.names)) { # for every file in list start at the first 
      #filter(Time.Min > starttime)%>%
      #filter(Time.Min < endtime) 
   
-  Photo.Data.N <- Photo.Data[,3:15] #subset desired columns
+  Photo.Data.N <- Photo.Data[,3:26] #subset desired columns
   
   #add column names back in 
   Photo.Data.N<-as.data.frame(Photo.Data.N)
