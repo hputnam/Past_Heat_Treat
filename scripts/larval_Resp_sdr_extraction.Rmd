@@ -198,6 +198,7 @@ write.csv(Resp.R, paste0("output/resp_sdr_rates_raw.csv")) #save respiration rat
 
 ```
 
+Need to finalize this script
 Calculate average temperature of each run and export to a table to confirm temperatures are not different between PAR values.    
 ```{r}
 # list files 
@@ -205,55 +206,34 @@ file.names<-basename(list.files(path = path.p, pattern = "csv$", recursive = TRU
 
 #generate matrix to populate
 Temp.R <- data.frame(matrix(NA, ncol=4))
-colnames(Temp.R) <- c("Date", "Plate","Temp.C")
+colnames(Temp.R) <- c("Date", "Plate","Temp.C", "Assay")
 
 Temp.Rb <- data.frame(matrix(NA, ncol=4))
-colnames(Temp.Rb) <- c("Date", "Plate","Temp.C")
+colnames(Temp.Rb) <- c("Date", "Plate","Temp.C", "Assay")
 
-#read in temps and generate mean values for each step of the light curve  
+#read in temps and generate mean values for each file  
 for(file in 1:length(file.names)) { 
   
   #for(i in Light_Values) {# for every file in list start at the first and run this following function
   
     Temp.Data <-read.table(file.path(path.p,file.names[file]), skip = 56, header=T, sep=",", na.string="NA", fill = TRUE, as.is=TRUE, fileEncoding="latin1") #reads in the data files
-  Temp.Data$Temp <- Temp.Data[,30] #assigns temp column
-  Temp.Data$Time.Min <- seq.int(from=0, to=((nrow(Temp.Data)*0.25)-0.25), by = 0.25) #set time in min
-  
-  #extract start and end times 
-  starttime<-Run.Info%>%
-    select(Plate, IntervalStart)%>%
-    filter(Plate==plate[file])%>%
-    #filter(Light_Level==i)%>%
-    select(IntervalStart)%>%
-    as.data.frame()
+  Temp.Data$Temp <- mean(Temp.Data[,30]) #assigns temp column
 
-   starttime<-starttime[1,1]
-   
-   endtime<-Run.Info%>%
-    select(Plate, IntervalStop)%>%
-    filter(Plate==plate[file])%>%
-    #filter(Light_Level==i)%>%
-    select(IntervalStop)%>%
-    as.data.frame()
-
-   endtime<-endtime[1,1]
-  
-  #filter by light interval - need to bind in dataframe to tell it which start and end time to use 
-  #Temp.Data <- Temp.Data %>% #filters data by interval for light 
-   #  filter(Time.Min > starttime)%>%
-    # filter(Time.Min < endtime) 
   
     Temp.Rb[j,1] <- as.character(date[file]) #stores the date
     Temp.Rb[j,2] <- as.character(plate[file]) #stores the run number
-    Temp.Rb[j,3] <- mean(Temp.Data$Temp) #stores the sample ID
-    #Temp.Rb[j,4] <- mean(Light_Values[]) #stores the sample ID
+    Temp.Rb[j,3] <- Temp.Data$Temp[1] #stores the sample ID
+    Temp.Rb[j,4] <- "Resp" #stores the assay name
     
     
     Temp.R <- rbind(Temp.R, Temp.Rb) #bind final data frame
-    Temp.R <- na.omit(Temp.R)
+    #Temp.R <- na.omit(Temp.R)
   
 #}
 
 }
+
+Temp.R <- na.omit(Temp.R)
+
 write.csv(Temp.R, paste0("output/resp_sdr_runs_temp.csv")) #save respiration rate data
 ```
