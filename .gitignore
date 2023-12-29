@@ -6,3 +6,5 @@
 .DS_Store
 */.DS_Store
 **/.DS_Store
+output/P_regressions/
+output/R_regressions/
