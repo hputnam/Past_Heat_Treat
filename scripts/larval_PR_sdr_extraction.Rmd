@@ -62,7 +62,7 @@ library('tidyverse')
 Set the path of all respirometry files within the R project.   
 
 ```{r, warning=FALSE, message=FALSE}
-path.p<-"data/pr_sdr/runP/test" #location of files
+path.p<-"data/pr_sdr/runP" #location of files
 ```
 
 Bring in the file names.
