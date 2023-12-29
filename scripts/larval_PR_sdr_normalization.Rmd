@@ -52,8 +52,7 @@ library('ggpubr')
 
 Load Raw extracted Oxygen Flux Rates
 ```{r, warning=FALSE, message=FALSE}
-Photo.Rates <- read.csv(file = "output/20231216_pr_sdr_rates_raw.csv") #read file back in so slopes don't have to be generated every time
-Photo.Rates = subset(Photo.Rates, select = -c(X) ) #remove empty column
+Photo.Rates <- read.csv(file = "output/photo_sdr_rates_raw.csv") #read file back in so slopes don't have to be generated every time
 
 #format  column
 Photo.Rates<-Photo.Rates %>%
@@ -66,22 +65,24 @@ Photo.Rates$Plate<-as.integer(Photo.Rates$Plate) #format as # rather than run #,
 Merge rates files with sample info for normalization, plotting, and stats.  
 
 ```{r, warning=FALSE, message=FALSE}
-Sample.Info <- read_csv(file = "data/pr_sdr/PR_SDR_Sample_Info.csv")%>%
-  select(!Notes)
+Sample.Info <- read_csv(file = "data/pr_sdr/PR_SDR_Sample_Info.csv")
 
 #Sample.Info <- Sample.Info %>%
 #  filter(Date == 20231216)
 
 #make unique ID column
-Sample.Info$unique <- paste0(Sample.Info$Date, Sample.Info$Plate, Sample.Info$Chamber.ID)
+Sample.Info$unique <- paste0(Sample.Info$Date, Sample.Info$Plate, Sample.Info$Chamber_ID)
 
-Photo.Rates$unique <- paste0(Photo.Rates$Date, Photo.Rates$Plate, Photo.Rates$Chamber.ID)
+Photo.Rates$unique <- paste0(Photo.Rates$Date, Photo.Rates$Plate, Photo.Rates$Chamber_ID)
 
 #oxygen<-left_join(Sample.Info, Photo.Rates, by="unique") #add photosynthesis data
 oxygen<- left_join(Sample.Info, Photo.Rates, by = "unique", suffix = c("", ".y")) 
 
 colnames(oxygen)[colnames(oxygen) == 'Intercept'] <- 'Photo.Intercept' #rename to specify R
 colnames(oxygen)[colnames(oxygen) == 'umol.L.min'] <- 'P.umol.L.min' #rename to specify R
+
+oxygen<- oxygen %>%
+  filter(Type=="Blank"|Type=="Sample")
 
 ```
 

@@ -84,10 +84,10 @@ Generate respiration data frames.
 #generate a 7 column dataframe with specific column names
 #photosynthesis
 Resp.R <- data.frame(matrix(NA, ncol=6))
-colnames(Resp.R) <- c("Date", "Plate","Chamber.ID","Light", "Intercept", "umol.L.min")
+colnames(Resp.R) <- c("Date", "Plate","Chamber_ID","Light", "Intercept", "umol.L.min")
 
 Resp.Rb <- data.frame(matrix(NA, ncol=6))
-colnames(Resp.Rb) <- c("Date", "Plate","Chamber.ID","Light", "Intercept", "umol.L.min")
+colnames(Resp.Rb) <- c("Date", "Plate","Chamber_ID","Light", "Intercept", "umol.L.min")
 
 ```
 

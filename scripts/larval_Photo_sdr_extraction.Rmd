@@ -84,10 +84,10 @@ Generate photosynthesis data frames.
 #generate a 7 column dataframe with specific column names
 #photosynthesis
 Photo.R <- data.frame(matrix(NA, ncol=6))
-colnames(Photo.R) <- c("Date", "Plate","Chamber.ID","Light", "Intercept", "umol.L.min")
+colnames(Photo.R) <- c("Date", "Plate","Chamber_ID","Light", "Intercept", "umol.L.min")
 
 Photo.Rb <- data.frame(matrix(NA, ncol=6))
-colnames(Photo.Rb) <- c("Date", "Plate","Chamber.ID","Light", "Intercept", "umol.L.min")
+colnames(Photo.Rb) <- c("Date", "Plate","Chamber_ID","Light", "Intercept", "umol.L.min")
 
 ```
 
